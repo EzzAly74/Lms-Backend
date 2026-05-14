@@ -48,16 +48,19 @@ trait ApiResponse
 
     protected function paginated(string $message, mixed $resource): JsonResponse
     {
-        $paginatedData = $resource->resource;
+        $paginator = $resource instanceof \Illuminate\Http\Resources\Json\ResourceCollection
+            ? $resource->resource
+            : $resource;
+
         return response()->json([
             'status'  => 'success',
             'message' => $message,
             'result'  => $resource,
             'meta'    => [
-                'current_page' => $paginatedData->currentPage(),
-                'last_page'    => $paginatedData->lastPage(),
-                'per_page'     => $paginatedData->perPage(),
-                'total'        => $paginatedData->total(),
+                'current_page' => $paginator->currentPage(),
+                'last_page'    => $paginator->lastPage(),
+                'per_page'     => $paginator->perPage(),
+                'total'        => $paginator->total(),
             ],
         ]);
     }
