@@ -27,7 +27,7 @@ class FormController extends ApiController
 
     public function show(Form $form): JsonResponse
     {
-        $form->load('questions.answers');
+        $form = $this->service->find($form->id);
         return $this->success(__('messages.retrieved'), new FormResource($form));
     }
 

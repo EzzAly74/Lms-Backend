@@ -19,4 +19,8 @@ interface CourseRepositoryInterface extends BaseRepositoryInterface
     public function allActive(): Collection;
 
     public function findWithRelations(int $id): Course;
+
+    public function findWithBasicRelations(int $id): Course;
+
+    public function activePluckedTitles(): Collection;
 }

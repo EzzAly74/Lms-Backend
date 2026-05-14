@@ -33,7 +33,9 @@
       "Bash(Select-Object -ExpandProperty FullName)",
       "Bash(Get-ChildItem -Path \"d:\\\\2b-source-code\\\\2B-Academy\" -Directory)",
       "PowerShell(Get-ChildItem -Path \"d:\\\\2b-source-code\\\\2B-Academy\\\\app\" -Directory | ForEach-Object { \"$\\($_.Name\\)\" })",
-      "PowerShell(Get-ChildItem -Path \"d:\\\\2b-source-code\\\\2B-Academy\\\\app\\\\Http\\\\Controllers\" -Directory | ForEach-Object { \"$\\($_.Name\\)\" })"
+      "PowerShell(Get-ChildItem -Path \"d:\\\\2b-source-code\\\\2B-Academy\\\\app\\\\Http\\\\Controllers\" -Directory | ForEach-Object { \"$\\($_.Name\\)\" })",
+      "Bash(Select-Object -First 20)",
+      "Bash(Get-ChildItem -Path \"d:\\\\2b-source-code\\\\2B-Academy\\\\app\\\\Http\\\\Controllers\\\\apis\" -Filter \"*.php\")"
     ]
   }
 }

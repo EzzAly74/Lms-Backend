@@ -25,14 +25,14 @@ class EvaluationController extends ApiController
 
     public function show(Evaluation $evaluation): JsonResponse
     {
-        $evaluation->load('category');
+        $evaluation = $this->service->findWithCategory($evaluation->id);
         return $this->success(__('messages.retrieved'), new EvaluationResource($evaluation));
     }
 
     public function store(EvaluationRequest $request): JsonResponse
     {
         $evaluation = $this->service->create($request->validated());
-        $evaluation->load('category');
+        $evaluation = $this->service->findWithCategory($evaluation->id);
         return $this->created(__('messages.created'), new EvaluationResource($evaluation));
     }
 

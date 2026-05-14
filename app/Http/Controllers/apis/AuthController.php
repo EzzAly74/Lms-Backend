@@ -61,9 +61,11 @@ class AuthController extends ApiController
 
     public function userMe(Request $request): JsonResponse
     {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
         return $this->success(
             __('messages.retrieved'),
-            new UserResource($request->user()->load('roles')),
+            new UserResource($this->userAuthService->getWithRoles($user)),
         );
     }
 
@@ -99,9 +101,11 @@ class AuthController extends ApiController
 
     public function adminMe(Request $request): JsonResponse
     {
+        /** @var \App\Models\Admin $admin */
+        $admin = $request->user();
         return $this->success(
             __('messages.retrieved'),
-            new AdminResource($request->user()->load('roles')),
+            new AdminResource($this->adminAuthService->getWithRoles($admin)),
         );
     }
 }

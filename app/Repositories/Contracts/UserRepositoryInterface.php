@@ -12,4 +12,8 @@ interface UserRepositoryInterface extends BaseRepositoryInterface
     public function findBySystemId(string $systemId): ?User;
 
     public function updateOrCreateBySystemId(string $systemId, array $data): User;
+
+    public function findWithRoles(int $id): User;
+
+    public function findWithActivity(int $id): User;
 }

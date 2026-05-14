@@ -2,32 +2,35 @@
 
 namespace App\Services;
 
-use App\Http\Traits\HasFile;
 use App\Models\Course;
 use App\Models\CourseLecture;
+use App\Repositories\Contracts\CourseLectureRepositoryInterface;
+use Illuminate\Database\Eloquent\Collection;
 
 class CourseLectureService
 {
-    use HasFile;
+    public function __construct(
+        private readonly CourseLectureRepositoryInterface $repo
+    ) {}
 
-    public function listForCourse(Course $course): \Illuminate\Database\Eloquent\Collection
+    public function listForCourse(Course $course): Collection
     {
-        return $course->sections()->with('lectures')->orderBy('id')->get();
+        return $this->repo->sectionsWithLecturesForCourse($course);
     }
 
     public function create(Course $course, array $data): CourseLecture
     {
-        return $course->lectures()->create($data);
+        return $this->repo->createForCourse($course, $data);
     }
 
     public function update(CourseLecture $lecture, array $data): CourseLecture
     {
-        $lecture->update($data);
-        return $lecture->fresh();
+        /** @var CourseLecture */
+        return $this->repo->update($lecture, $data);
     }
 
     public function delete(CourseLecture $lecture): void
     {
-        $lecture->delete();
+        $this->repo->delete($lecture);
     }
 }

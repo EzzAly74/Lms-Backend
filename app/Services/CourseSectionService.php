@@ -26,17 +26,17 @@ class CourseSectionService
 
     public function create(Course $course, array $data): CourseSection
     {
-        return $course->sections()->create(['name' => $data['name']]);
+        return $this->repo->createForCourse($course, $data);
     }
 
     public function update(CourseSection $section, array $data): CourseSection
     {
-        $section->update(['name' => $data['name']]);
-        return $section->fresh();
+        /** @var CourseSection */
+        return $this->repo->update($section, ['name' => $data['name']]);
     }
 
     public function delete(CourseSection $section): void
     {
-        $section->delete();
+        $this->repo->delete($section);
     }
 }

@@ -22,8 +22,9 @@ class CourseAssignmentController extends ApiController
 
     public function index(Course $course): JsonResponse
     {
-        $assignments = $this->service->listForCourse($course);
-        return $this->success(__('messages.retrieved'), CourseAssignmentResource::collection($assignments));
+        return $this->success(__('messages.retrieved'),
+            CourseAssignmentResource::collection($this->service->listForCourse($course))
+        );
     }
 
     public function store(Course $course, CourseAssignmentRequest $request): JsonResponse
@@ -66,7 +67,6 @@ class CourseAssignmentController extends ApiController
 
         $data       = $request->validated();
         $submission = $this->service->reviewSubmission($submission, $data['feedback'] ?? null, $data['score'] ?? null);
-        $submission->load('user', 'assignment');
 
         return $this->success(__('messages.updated'), new UserCourseAssignmentResource($submission));
     }
@@ -80,7 +80,6 @@ class CourseAssignmentController extends ApiController
         /** @var \App\Models\User $user */
         $user       = $request->user();
         $submission = $this->service->submitFile($assignment, $user, $request->file('file'));
-        $submission->load('assignment');
 
         return $this->success(__('messages.updated'), new UserCourseAssignmentResource($submission));
     }
@@ -93,15 +92,10 @@ class CourseAssignmentController extends ApiController
 
         /** @var \App\Models\User $user */
         $user       = $request->user();
-        $submission = UserCourseAssignment::with('assignment')
-            ->where('course_assignment_id', $assignment->id)
-            ->where('user_id', $user->id)
-            ->first();
+        $submission = $this->service->findSubmission($assignment->id, $user->id);
 
-        if (!$submission) {
-            return $this->success(__('messages.retrieved'), null);
-        }
-
-        return $this->success(__('messages.retrieved'), new UserCourseAssignmentResource($submission));
+        return $this->success(__('messages.retrieved'),
+            $submission ? new UserCourseAssignmentResource($submission) : null
+        );
     }
 }

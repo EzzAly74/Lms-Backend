@@ -51,4 +51,19 @@ class CourseRepository extends BaseRepository implements CourseRepositoryInterfa
             ])
             ->findOrFail($id);
     }
+
+    public function findWithBasicRelations(int $id): Course
+    {
+        return $this->model->newQuery()
+            ->with(['category:id,name', 'instructors:id,name'])
+            ->findOrFail($id);
+    }
+
+    public function activePluckedTitles(): Collection
+    {
+        return $this->model->newQuery()
+            ->active()
+            ->orderBy('id')
+            ->pluck('title', 'id');
+    }
 }

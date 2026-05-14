@@ -2,23 +2,53 @@
 
 namespace App\Providers;
 
+use App\Repositories\Contracts\AboutRepositoryInterface;
+use App\Repositories\Contracts\AdminRepositoryInterface;
+use App\Repositories\Contracts\ArticleRepositoryInterface;
 use App\Repositories\Contracts\CategoryRepositoryInterface;
+use App\Repositories\Contracts\CertificateRepositoryInterface;
+use App\Repositories\Contracts\CourseAssignmentRepositoryInterface;
 use App\Repositories\Contracts\CourseExamRepositoryInterface;
+use App\Repositories\Contracts\CourseLectureRepositoryInterface;
 use App\Repositories\Contracts\CourseRepositoryInterface;
 use App\Repositories\Contracts\CourseSectionRepositoryInterface;
+use App\Repositories\Contracts\CourseSessionRepositoryInterface;
+use App\Repositories\Contracts\DashboardRepositoryInterface;
 use App\Repositories\Contracts\EvaluationCategoryRepositoryInterface;
+use App\Repositories\Contracts\EvaluationReportRepositoryInterface;
 use App\Repositories\Contracts\EvaluationRepositoryInterface;
+use App\Repositories\Contracts\FormRepositoryInterface;
 use App\Repositories\Contracts\InstructorRepositoryInterface;
+use App\Repositories\Contracts\NotificationRepositoryInterface;
+use App\Repositories\Contracts\RoleRepositoryInterface;
+use App\Repositories\Contracts\TestimonialRepositoryInterface;
+use App\Repositories\Contracts\UserEnrollmentRepositoryInterface;
+use App\Repositories\Contracts\UserProgressRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Repositories\Eloquents\AboutRepository;
+use App\Repositories\Eloquents\AdminRepository;
+use App\Repositories\Eloquents\ArticleRepository;
 use App\Repositories\Eloquents\CategoryRepository;
+use App\Repositories\Eloquents\CertificateRepository;
+use App\Repositories\Eloquents\CourseAssignmentRepository;
 use App\Repositories\Eloquents\CourseExamRepository;
+use App\Repositories\Eloquents\CourseLectureRepository;
 use App\Repositories\Eloquents\CourseRepository;
 use App\Repositories\Eloquents\CourseSectionRepository;
+use App\Repositories\Eloquents\CourseSessionRepository;
+use App\Repositories\Eloquents\DashboardRepository;
 use App\Repositories\Eloquents\EvaluationCategoryRepository;
+use App\Repositories\Eloquents\EvaluationReportRepository;
 use App\Repositories\Eloquents\EvaluationRepository;
+use App\Repositories\Eloquents\FormRepository;
 use App\Repositories\Eloquents\InstructorRepository;
-use App\Models\Category;
+use App\Repositories\Eloquents\NotificationRepository;
+use App\Repositories\Eloquents\RoleRepository;
+use App\Repositories\Eloquents\TestimonialRepository;
+use App\Repositories\Eloquents\UserEnrollmentRepository;
+use App\Repositories\Eloquents\UserProgressRepository;
 use App\Repositories\Eloquents\UserRepository;
+use App\Models\Category;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -39,14 +69,31 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         // Repository bindings — interface → Eloquent implementation
-        $this->app->bind(CategoryRepositoryInterface::class,          CategoryRepository::class);
-        $this->app->bind(CourseRepositoryInterface::class,            CourseRepository::class);
-        $this->app->bind(CourseSectionRepositoryInterface::class,     CourseSectionRepository::class);
-        $this->app->bind(CourseExamRepositoryInterface::class,        CourseExamRepository::class);
-        $this->app->bind(UserRepositoryInterface::class,              UserRepository::class);
-        $this->app->bind(InstructorRepositoryInterface::class,        InstructorRepository::class);
+        $this->app->bind(CategoryRepositoryInterface::class,           CategoryRepository::class);
+        $this->app->bind(CourseRepositoryInterface::class,             CourseRepository::class);
+        $this->app->bind(CourseSectionRepositoryInterface::class,      CourseSectionRepository::class);
+        $this->app->bind(CourseExamRepositoryInterface::class,         CourseExamRepository::class);
+        $this->app->bind(UserRepositoryInterface::class,               UserRepository::class);
+        $this->app->bind(InstructorRepositoryInterface::class,         InstructorRepository::class);
         $this->app->bind(EvaluationCategoryRepositoryInterface::class, EvaluationCategoryRepository::class);
-        $this->app->bind(EvaluationRepositoryInterface::class,        EvaluationRepository::class);
+        $this->app->bind(EvaluationRepositoryInterface::class,         EvaluationRepository::class);
+
+        // New repository bindings
+        $this->app->bind(ArticleRepositoryInterface::class,            ArticleRepository::class);
+        $this->app->bind(AdminRepositoryInterface::class,              AdminRepository::class);
+        $this->app->bind(AboutRepositoryInterface::class,              AboutRepository::class);
+        $this->app->bind(TestimonialRepositoryInterface::class,        TestimonialRepository::class);
+        $this->app->bind(CourseSessionRepositoryInterface::class,      CourseSessionRepository::class);
+        $this->app->bind(CourseAssignmentRepositoryInterface::class,   CourseAssignmentRepository::class);
+        $this->app->bind(CourseLectureRepositoryInterface::class,      CourseLectureRepository::class);
+        $this->app->bind(FormRepositoryInterface::class,               FormRepository::class);
+        $this->app->bind(NotificationRepositoryInterface::class,       NotificationRepository::class);
+        $this->app->bind(CertificateRepositoryInterface::class,        CertificateRepository::class);
+        $this->app->bind(UserEnrollmentRepositoryInterface::class,     UserEnrollmentRepository::class);
+        $this->app->bind(UserProgressRepositoryInterface::class,       UserProgressRepository::class);
+        $this->app->bind(RoleRepositoryInterface::class,               RoleRepository::class);
+        $this->app->bind(DashboardRepositoryInterface::class,          DashboardRepository::class);
+        $this->app->bind(EvaluationReportRepositoryInterface::class,   EvaluationReportRepository::class);
     }
 
     public function boot(): void

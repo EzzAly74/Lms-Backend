@@ -38,4 +38,21 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
             $data,
         );
     }
+
+    public function findWithRoles(int $id): User
+    {
+        return $this->model->newQuery()->with('roles')->findOrFail($id);
+    }
+
+    public function findWithActivity(int $id): User
+    {
+        return $this->model->newQuery()
+            ->with([
+                'courses.category:id,name',
+                'ratings.course:id,title',
+                'exams.course:id,title,certificate',
+                'exams.exam:id,title,degree,is_final',
+            ])
+            ->findOrFail($id);
+    }
 }

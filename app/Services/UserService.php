@@ -25,14 +25,7 @@ class UserService
 
     public function getUserWithActivity(int $id): User
     {
-        $user = $this->userRepository->findOrFail($id);
-
-        return $user->load([
-            'courses.category:id,name',
-            'ratings.course:id,title',
-            'exams.course:id,title,certificate',
-            'exams.exam:id,title,degree,is_final',
-        ]);
+        return $this->userRepository->findWithActivity($id);
     }
 
     /**

@@ -34,6 +34,11 @@ class CourseService
         return $this->courseRepository->allActive();
     }
 
+    public function activePluckedTitles(): Collection
+    {
+        return $this->courseRepository->activePluckedTitles();
+    }
+
     public function findOrFail(int $id): Course
     {
         return $this->courseRepository->findWithRelations($id);
@@ -58,7 +63,7 @@ class CourseService
             $course->instructors()->attach($instructors);
         }
 
-        return $course->load(['category:id,name', 'instructors:id,name']);
+        return $this->courseRepository->findWithBasicRelations($course->id);
     }
 
     public function update(Course $course, array $data, ?UploadedFile $image = null): Course
@@ -80,7 +85,7 @@ class CourseService
             $course->instructors()->sync($instructors);
         }
 
-        return $course->load(['category:id,name', 'instructors:id,name']);
+        return $this->courseRepository->findWithBasicRelations($course->id);
     }
 
     public function delete(Course $course): bool

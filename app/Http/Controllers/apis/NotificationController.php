@@ -21,7 +21,7 @@ class NotificationController extends ApiController
 
     public function show(PublicNotification $notification): JsonResponse
     {
-        $notification->load('users');
+        $notification = $this->service->find($notification->id);
         return $this->success(__('messages.retrieved'), new NotificationResource($notification));
     }
 

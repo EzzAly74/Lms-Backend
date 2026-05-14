@@ -6,31 +6,25 @@ use App\Http\Requests\Api\AboutRequest;
 use App\Http\Requests\Api\TestimonialRequest;
 use App\Http\Resources\AboutResource;
 use App\Http\Resources\TestimonialResource;
-use App\Http\Traits\HasFile;
-use App\Models\About;
 use App\Models\Testimonial;
+use App\Services\CmsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CmsController extends ApiController
 {
-    use HasFile;
+    public function __construct(private readonly CmsService $service) {}
 
     // ── About ──────────────────────────────────────────────────────────────
 
     public function aboutShow(): JsonResponse
     {
-        $about = About::first() ?? new About();
-        return $this->success(__('messages.retrieved'), new AboutResource($about));
+        return $this->success(__('messages.retrieved'), new AboutResource($this->service->getAbout()));
     }
 
     public function aboutUpdate(AboutRequest $request): JsonResponse
     {
-        $data = $request->validated();
-        if ($request->hasFile('image')) {
-            $data['image'] = $this->uploadFile('About', $request->file('image'));
-        }
-        $about = About::updateOrCreate(['id' => About::first()?->id ?? null], $data);
+        $about = $this->service->updateAbout($request->validated(), $request->file('image'));
         return $this->success(__('messages.updated'), new AboutResource($about));
     }
 
@@ -38,14 +32,15 @@ class CmsController extends ApiController
 
     public function testimonialIndex(Request $request): JsonResponse
     {
-        $testimonials = Testimonial::orderByDesc('id')->paginate((int) $request->get('per_page', 20));
+        $testimonials = $this->service->paginateTestimonials((int) $request->get('per_page', 20));
         return $this->paginated(__('messages.retrieved'), $testimonials);
     }
 
     public function testimonialActiveList(): JsonResponse
     {
-        $testimonials = Testimonial::active()->get();
-        return $this->success(__('messages.retrieved'), TestimonialResource::collection($testimonials));
+        return $this->success(__('messages.retrieved'),
+            TestimonialResource::collection($this->service->activeTestimonials())
+        );
     }
 
     public function testimonialShow(Testimonial $testimonial): JsonResponse
@@ -55,29 +50,19 @@ class CmsController extends ApiController
 
     public function testimonialStore(TestimonialRequest $request): JsonResponse
     {
-        $data = $request->validated();
-        if ($request->hasFile('image')) {
-            $data['image'] = $this->uploadFile('Testimonial', $request->file('image'));
-        }
-        $data['active'] = (bool) ($data['active'] ?? true);
-        $testimonial = Testimonial::create($data);
+        $testimonial = $this->service->createTestimonial($request->validated(), $request->file('image'));
         return $this->created(__('messages.created'), new TestimonialResource($testimonial));
     }
 
     public function testimonialUpdate(Testimonial $testimonial, TestimonialRequest $request): JsonResponse
     {
-        $data = $request->validated();
-        if ($request->hasFile('image')) {
-            $data['image'] = $this->uploadFile('Testimonial', $request->file('image'));
-        }
-        $data['active'] = (bool) ($data['active'] ?? $testimonial->active);
-        $testimonial->update($data);
-        return $this->success(__('messages.updated'), new TestimonialResource($testimonial->fresh()));
+        $testimonial = $this->service->updateTestimonial($testimonial, $request->validated(), $request->file('image'));
+        return $this->success(__('messages.updated'), new TestimonialResource($testimonial));
     }
 
     public function testimonialDestroy(Testimonial $testimonial): JsonResponse
     {
-        $testimonial->delete();
+        $this->service->deleteTestimonial($testimonial);
         return $this->deleted(__('messages.deleted'));
     }
 }

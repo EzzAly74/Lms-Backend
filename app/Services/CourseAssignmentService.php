@@ -7,6 +7,7 @@ use App\Models\Course;
 use App\Models\CourseAssignment;
 use App\Models\User;
 use App\Models\UserCourseAssignment;
+use App\Repositories\Contracts\CourseAssignmentRepositoryInterface;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -15,15 +16,21 @@ class CourseAssignmentService
 {
     use HasFile;
 
+    public function __construct(
+        private readonly CourseAssignmentRepositoryInterface $repo
+    ) {}
+
     public function listForCourse(Course $course): Collection
     {
-        return $course->assignments()->orderBy('id')->get();
+        return $this->repo->listForCourse($course);
     }
 
     public function create(Course $course, string $title, UploadedFile $file): CourseAssignment
     {
         $path = $this->uploadRequestFile('CourseAssignment', request(), null, $file);
-        return $course->assignments()->create(['title' => $title, 'file' => $path]);
+
+        /** @var CourseAssignment */
+        return $this->repo->createForCourse($course, ['title' => $title, 'file' => $path]);
     }
 
     public function update(CourseAssignment $assignment, string $title, ?UploadedFile $file): CourseAssignment
@@ -32,36 +39,51 @@ class CourseAssignmentService
         if ($file) {
             $data['file'] = $this->uploadRequestFile('CourseAssignment', request(), null, $file);
         }
-        $assignment->update($data);
-        return $assignment->fresh();
+
+        /** @var CourseAssignment */
+        return $this->repo->update($assignment, $data);
     }
 
     public function delete(CourseAssignment $assignment): void
     {
-        $assignment->delete();
+        $this->repo->delete($assignment);
     }
 
     public function listSubmissions(CourseAssignment $assignment, int $perPage = 20): LengthAwarePaginator
     {
-        return UserCourseAssignment::with(['user:id,name,machine_code,department_name', 'assignment'])
-            ->where('course_assignment_id', $assignment->id)
-            ->orderByDesc('id')
-            ->paginate($perPage);
+        return $this->repo->listSubmissions($assignment, $perPage);
     }
 
     public function submitFile(CourseAssignment $assignment, User $user, UploadedFile $file): UserCourseAssignment
     {
         $path = $this->uploadRequestFile('UserAssignment', request(), null, $file);
-
-        return UserCourseAssignment::updateOrCreate(
-            ['user_id' => $user->id, 'course_assignment_id' => $assignment->id],
-            ['user_file' => $path]
-        );
+        $submission = $this->repo->upsertSubmission($assignment, $user, ['user_file' => $path]);
+        return $this->repo->findSubmissionWithRelations($submission->id);
     }
 
     public function reviewSubmission(UserCourseAssignment $submission, ?string $feedback, ?string $score): UserCourseAssignment
     {
-        $submission->update(['feedback' => $feedback, 'score' => $score]);
-        return $submission->fresh();
+        $this->repo->update($submission, ['feedback' => $feedback, 'score' => $score]);
+        return $this->repo->findSubmissionWithRelations($submission->id);
+    }
+
+    public function findSubmission(int $assignmentId, int $userId): ?UserCourseAssignment
+    {
+        return $this->repo->findSubmission($assignmentId, $userId);
+    }
+
+    public function findSubmissionById(int $id): UserCourseAssignment
+    {
+        return $this->repo->findSubmissionWithRelations($id);
+    }
+
+    public function paginateAllSubmissions(?int $userId, ?int $courseId, int $perPage = 20): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        return $this->repo->paginateAllSubmissions($userId, $courseId, $perPage);
+    }
+
+    public function deleteSubmissionById(int $id): void
+    {
+        $this->repo->deleteSubmissionById($id);
     }
 }

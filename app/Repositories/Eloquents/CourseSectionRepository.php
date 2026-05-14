@@ -6,6 +6,7 @@ use App\Models\Course;
 use App\Models\CourseSection;
 use App\Repositories\Contracts\CourseSectionRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 
 class CourseSectionRepository extends BaseRepository implements CourseSectionRepositoryInterface
 {
@@ -17,6 +18,11 @@ class CourseSectionRepository extends BaseRepository implements CourseSectionRep
     public function allForCourse(Course $course): Collection
     {
         return $course->sections()->orderBy('id')->get();
+    }
+
+    public function createForCourse(Course $course, array $data): CourseSection
+    {
+        return $course->sections()->create(['name' => $data['name']]);
     }
 
     public function syncForCourse(Course $course, array $sections): void
