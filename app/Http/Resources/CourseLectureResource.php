@@ -12,7 +12,7 @@ class CourseLectureResource extends JsonResource
         return [
             'id'         => $this->id,
             'section_id' => $this->section_id,
-            'title'      => $this->getTranslations('title'),
+            'title'      => $this->getTranslation('title', app()->getLocale()),
             'type'       => $this->type,
             'video'      => $this->video,
             'created_at' => $this->created_at?->format('Y-m-d'),

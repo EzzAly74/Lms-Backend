@@ -11,24 +11,24 @@ class CourseDetailResource extends JsonResource
     {
         return [
             'id'                 => $this->id,
-            'title'              => $this->title,
-            'description'        => $this->description,
+            'title'              => $this->getTranslation('title', app()->getLocale()),
+            'description'        => $this->getTranslation('description', app()->getLocale()),
             'course_type'        => $this->course_type,
             'category'           => $this->whenLoaded('category', fn () => [
                 'id'   => $this->category->id,
-                'name' => $this->category->name,
+                'name' => $this->category->getTranslation('name', app()->getLocale()),
             ]),
             'instructors'        => $this->whenLoaded('instructors',
                 fn () => $this->instructors->map(fn ($i) => [
                     'id'    => $i->id,
-                    'name'  => $i->name,
+                    'name'  => $i->getTranslation('name', app()->getLocale()),
                     'image' => $i->image ? $i->getFileUrl($i->image) : null,
                 ]),
             ),
             'sections'           => $this->whenLoaded('sections', fn () => $this->sections),
             'exams'              => $this->whenLoaded('exams', fn () => $this->exams->map(fn ($e) => [
                 'id'       => $e->id,
-                'title'    => $e->title,
+                'title'    => $e->getTranslation('title', app()->getLocale()),
                 'degree'   => $e->degree,
                 'is_final' => (bool) $e->is_final,
             ])),
@@ -40,7 +40,7 @@ class CourseDetailResource extends JsonResource
             'price'              => $this->price,
             'currency'           => $this->currency,
             'certificate'        => (bool) $this->certificate,
-            'title_for_certificate' => $this->title_for_certificate,
+            'title_for_certificate' => $this->getTranslation('title_for_certificate', app()->getLocale()),
             'active'             => (bool) $this->active,
             'for_public'         => (bool) $this->for_public,
             'is_evaluate'        => (bool) $this->is_evaluate,

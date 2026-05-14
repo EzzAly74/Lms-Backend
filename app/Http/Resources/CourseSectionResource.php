@@ -11,7 +11,7 @@ class CourseSectionResource extends JsonResource
     {
         return [
             'id'       => $this->id,
-            'name'     => $this->getTranslations('name'),
+            'name'     => $this->getTranslation('name', app()->getLocale()),
             'lectures' => $this->whenLoaded('lectures', fn () => CourseLectureResource::collection($this->lectures)),
             'exams'    => $this->whenLoaded('exams', fn () => CourseExamResource::collection($this->exams)),
         ];

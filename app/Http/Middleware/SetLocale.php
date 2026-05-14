@@ -12,7 +12,10 @@ class SetLocale
     const ALLOWED_LOCALIZATIONS = ['en', 'ar'];
     public function handle(Request $request, Closure $next)
     {
-        $localization = $request->header('LANGUAGE');
+        $localization = $request->header('Accept-Language')
+            ?? $request->header('culture')
+            ?? $request->header('LANGUAGE');
+
         $localization = in_array($localization, self::ALLOWED_LOCALIZATIONS, true) ? $localization : 'ar';
         app()->setLocale($localization);
         return $next($request);

@@ -30,7 +30,10 @@
       "Bash(Get-ChildItem -Path \"d:\\\\2b-source-code\\\\2b-academy-source-code\\\\app\\\\Http\\\\Controllers\\\\FrontControllers\\\\\" -Force)",
       "PowerShell(Get-ChildItem -Path \"d:\\\\2b-source-code\\\\2b-academy-source-code\\\\app\\\\Http\\\\Controllers\\\\FrontControllers\" -Force | Select-Object Name, @{Name=\"Type\";Expression={if\\($_.PSIsContainer\\){\"Directory\"}else{\"File\"}}} | Format-List)",
       "Bash(Get-ChildItem -Path \"d:\\\\2b-source-code\\\\2b-academy-source-code\\\\tests\" -Recurse -File)",
-      "Bash(Select-Object -ExpandProperty FullName)"
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Get-ChildItem -Path \"d:\\\\2b-source-code\\\\2B-Academy\" -Directory)",
+      "PowerShell(Get-ChildItem -Path \"d:\\\\2b-source-code\\\\2B-Academy\\\\app\" -Directory | ForEach-Object { \"$\\($_.Name\\)\" })",
+      "PowerShell(Get-ChildItem -Path \"d:\\\\2b-source-code\\\\2B-Academy\\\\app\\\\Http\\\\Controllers\" -Directory | ForEach-Object { \"$\\($_.Name\\)\" })"
     ]
   }
 }
