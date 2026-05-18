@@ -4,6 +4,7 @@ namespace App\Http\Controllers\apis;
 
 use App\Http\Requests\Api\AdminLoginRequest;
 use App\Http\Requests\Api\LoginRequest;
+use App\Http\Requests\Api\UpdateAdminProfileRequest;
 use App\Http\Resources\AdminResource;
 use App\Http\Resources\UserResource;
 use App\Models\Admin;
@@ -69,6 +70,24 @@ class AuthController extends ApiController
         );
     }
 
+    public function userUpdateProfile(Request $request): JsonResponse
+    {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        $data = $request->validate([
+            'name'  => 'sometimes|string|max:255',
+            'phone' => 'sometimes|nullable|string|max:50',
+        ]);
+
+        $user->update($data);
+
+        return $this->success(
+            __('messages.updated'),
+            new UserResource($this->userAuthService->getWithRoles($user->fresh())),
+        );
+    }
+
     // -------------------------------------------------------------------------
     // Admin Auth
     // -------------------------------------------------------------------------
@@ -106,6 +125,18 @@ class AuthController extends ApiController
         return $this->success(
             __('messages.retrieved'),
             new AdminResource($this->adminAuthService->getWithRoles($admin)),
+        );
+    }
+
+    public function adminUpdateProfile(UpdateAdminProfileRequest $request): JsonResponse
+    {
+        /** @var Admin $admin */
+        $admin = $request->user();
+        $admin->update($request->validated());
+
+        return $this->success(
+            __('messages.updated'),
+            new AdminResource($this->adminAuthService->getWithRoles($admin->fresh())),
         );
     }
 }

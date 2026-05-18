@@ -23,6 +23,17 @@ class NotificationService
         return $this->repo->findWithUsers($id);
     }
 
+    public function update(PublicNotification $notification, array $data): PublicNotification
+    {
+        $notification->update($data);
+        return $notification->fresh();
+    }
+
+    public function delete(PublicNotification $notification): void
+    {
+        $notification->delete();
+    }
+
     public function create(array $data, array $userCodes = []): PublicNotification
     {
         $data['for_public'] = (bool) ($data['for_public'] ?? false);

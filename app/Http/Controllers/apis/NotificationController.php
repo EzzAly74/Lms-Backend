@@ -34,4 +34,19 @@ class NotificationController extends ApiController
         $notification = $this->service->create($data, $userCodes);
         return $this->created(__('messages.created'), new NotificationResource($notification));
     }
+
+    public function update(PublicNotificationRequest $request, PublicNotification $notification): JsonResponse
+    {
+        $data      = $request->validated();
+        unset($data['user_codes']);
+
+        $updated = $this->service->update($notification, $data);
+        return $this->success(__('messages.updated'), new NotificationResource($updated));
+    }
+
+    public function destroy(PublicNotification $notification): JsonResponse
+    {
+        $this->service->delete($notification);
+        return $this->deleted();
+    }
 }

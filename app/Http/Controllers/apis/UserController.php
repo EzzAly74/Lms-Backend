@@ -47,6 +47,19 @@ class UserController extends ApiController
         );
     }
 
+    public function update(Request $request, User $user): JsonResponse
+    {
+        $data = $request->validate([
+            'name'            => 'sometimes|string|max:255',
+            'phone'           => 'sometimes|nullable|string|max:50',
+            'department_name' => 'sometimes|nullable|string|max:255',
+        ]);
+
+        $user = $this->userService->update($user, $data);
+
+        return $this->success(__('messages.updated'), new UserResource($user));
+    }
+
     public function destroy(User $user): JsonResponse
     {
         $this->userService->delete($user);

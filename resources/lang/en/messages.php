@@ -17,4 +17,15 @@ return [
     'deleted'             => 'Deleted successfully.',
     'not_found'           => 'Resource not found.',
     'server_error'        => 'An unexpected error occurred.',
+
+    // Business logic
+    'exam_already_submitted'  => 'You have already submitted this exam.',
+    'already_evaluated'       => 'You have already submitted an evaluation for this course.',
+    'form_already_submitted'  => 'You have already submitted this form.',
+    'attendance_complete'     => 'You have already attended all sessions for this course.',
+    'attendance_recorded'     => 'Attendance recorded successfully.',
+    'validation_failed'       => 'The given data was invalid.',
+    'conflict'                => 'A conflict occurred with the current state of the resource.',
+    'course_not_enrolled'     => 'You are not enrolled in this course.',
+    'course_not_evaluatable'  => 'This course is not available for evaluation.',
 ];

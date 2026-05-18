@@ -19,4 +19,16 @@ class CertificateController extends ApiController
 
         return $this->paginated(__('messages.retrieved'), $certificates);
     }
+
+    /** Show all certificates for a specific course. */
+    public function show(int $courseId): JsonResponse
+    {
+        $result = $this->service->findByCourse($courseId);
+
+        if (empty($result)) {
+            return $this->notFound();
+        }
+
+        return $this->success(__('messages.retrieved'), $result);
+    }
 }

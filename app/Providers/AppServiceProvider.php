@@ -5,11 +5,14 @@ namespace App\Providers;
 use App\Repositories\Contracts\AboutRepositoryInterface;
 use App\Repositories\Contracts\AdminRepositoryInterface;
 use App\Repositories\Contracts\ArticleRepositoryInterface;
+use App\Repositories\Contracts\AttendanceRepositoryInterface;
 use App\Repositories\Contracts\CategoryRepositoryInterface;
 use App\Repositories\Contracts\CertificateRepositoryInterface;
 use App\Repositories\Contracts\CourseAssignmentRepositoryInterface;
 use App\Repositories\Contracts\CourseExamRepositoryInterface;
 use App\Repositories\Contracts\CourseLectureRepositoryInterface;
+use App\Repositories\Contracts\CourseLectureQuestionRepositoryInterface;
+use App\Repositories\Contracts\CourseRatingRepositoryInterface;
 use App\Repositories\Contracts\CourseRepositoryInterface;
 use App\Repositories\Contracts\CourseSectionRepositoryInterface;
 use App\Repositories\Contracts\CourseSessionRepositoryInterface;
@@ -20,7 +23,9 @@ use App\Repositories\Contracts\EvaluationRepositoryInterface;
 use App\Repositories\Contracts\FormRepositoryInterface;
 use App\Repositories\Contracts\InstructorRepositoryInterface;
 use App\Repositories\Contracts\NotificationRepositoryInterface;
+use App\Repositories\Contracts\OnlineEnrollmentRepositoryInterface;
 use App\Repositories\Contracts\RoleRepositoryInterface;
+use App\Repositories\Contracts\SettingRepositoryInterface;
 use App\Repositories\Contracts\TestimonialRepositoryInterface;
 use App\Repositories\Contracts\UserEnrollmentRepositoryInterface;
 use App\Repositories\Contracts\UserProgressRepositoryInterface;
@@ -28,11 +33,14 @@ use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Repositories\Eloquents\AboutRepository;
 use App\Repositories\Eloquents\AdminRepository;
 use App\Repositories\Eloquents\ArticleRepository;
+use App\Repositories\Eloquents\AttendanceRepository;
 use App\Repositories\Eloquents\CategoryRepository;
 use App\Repositories\Eloquents\CertificateRepository;
 use App\Repositories\Eloquents\CourseAssignmentRepository;
 use App\Repositories\Eloquents\CourseExamRepository;
 use App\Repositories\Eloquents\CourseLectureRepository;
+use App\Repositories\Eloquents\CourseLectureQuestionRepository;
+use App\Repositories\Eloquents\CourseRatingRepository;
 use App\Repositories\Eloquents\CourseRepository;
 use App\Repositories\Eloquents\CourseSectionRepository;
 use App\Repositories\Eloquents\CourseSessionRepository;
@@ -43,7 +51,9 @@ use App\Repositories\Eloquents\EvaluationRepository;
 use App\Repositories\Eloquents\FormRepository;
 use App\Repositories\Eloquents\InstructorRepository;
 use App\Repositories\Eloquents\NotificationRepository;
+use App\Repositories\Eloquents\OnlineEnrollmentRepository;
 use App\Repositories\Eloquents\RoleRepository;
+use App\Repositories\Eloquents\SettingRepository;
 use App\Repositories\Eloquents\TestimonialRepository;
 use App\Repositories\Eloquents\UserEnrollmentRepository;
 use App\Repositories\Eloquents\UserProgressRepository;
@@ -94,6 +104,13 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(RoleRepositoryInterface::class,               RoleRepository::class);
         $this->app->bind(DashboardRepositoryInterface::class,          DashboardRepository::class);
         $this->app->bind(EvaluationReportRepositoryInterface::class,   EvaluationReportRepository::class);
+
+        // New feature repository bindings
+        $this->app->bind(CourseRatingRepositoryInterface::class,        CourseRatingRepository::class);
+        $this->app->bind(CourseLectureQuestionRepositoryInterface::class, CourseLectureQuestionRepository::class);
+        $this->app->bind(SettingRepositoryInterface::class,             SettingRepository::class);
+        $this->app->bind(OnlineEnrollmentRepositoryInterface::class,    OnlineEnrollmentRepository::class);
+        $this->app->bind(AttendanceRepositoryInterface::class,          AttendanceRepository::class);
     }
 
     public function boot(): void

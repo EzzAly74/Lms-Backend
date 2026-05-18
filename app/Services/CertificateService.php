@@ -32,6 +32,18 @@ class CertificateService
         );
     }
 
+    /** Return all certificate entries for a specific course (exam + eval paths). */
+    public function findByCourse(int $courseId): array
+    {
+        $examCerts = $this->repo->getExamCertificates($courseId)
+            ->map(fn ($ue) => $this->formatExamCert($ue));
+
+        $evalCerts = $this->repo->getEvalCertificates($courseId)
+            ->map(fn ($uce) => $this->formatEvalCert($uce));
+
+        return $examCerts->merge($evalCerts)->sortByDesc('created_at')->values()->all();
+    }
+
     private function formatExamCert($ue): array
     {
         return [
