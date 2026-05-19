@@ -38,7 +38,8 @@ class GetAllEmployeesFromHRSystemJob implements ShouldQueue
                 'phone'           => $employee->phone,
                 'machine_code'    => $employee->machineCode,
                 'department_name' => $employee->departmentName,
+                'job_title'       => $employee->jobName,
             ];
-        })->toArray(), ['system_id'], ['name','email','phone','machine_code','department_name']);
+        })->toArray(), ['system_id'], ['name','email','phone','machine_code','department_name','job_title']);
     }
 }

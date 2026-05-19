@@ -53,6 +53,7 @@ class GetAllEmployeesFromHRSystemCommand extends Command
                         'phone' => $employee->phone,
                         'machine_code' => $employee->machineCode,
                         'department_name' => $employee->departmentName,
+                        'job_title' => $employee->jobName,
                         'updated_at' => now(),
                     ]
                 );
