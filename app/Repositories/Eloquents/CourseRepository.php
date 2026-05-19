@@ -22,7 +22,11 @@ class CourseRepository extends BaseRepository implements CourseRepositoryInterfa
         ?string $courseType,
     ): LengthAwarePaginator {
         return $this->model->newQuery()
-            ->with(['category:id,name', 'instructors:id,name'])
+            ->with([
+                'category:id,name',
+                'instructors:id,name',
+                'qualificationSkills:id,name',
+            ])
             ->when($search, fn ($q) => $q->where('title', 'LIKE', "%{$search}%"))
             ->when($categoryId, fn ($q) => $q->where('category_id', $categoryId))
             ->when(!is_null($active), fn ($q) => $q->where('active', $active))
@@ -46,6 +50,7 @@ class CourseRepository extends BaseRepository implements CourseRepositoryInterfa
             ->with([
                 'category:id,name',
                 'instructors:id,name,image',
+                'qualificationSkills:id,name',
                 'sections',
                 'exams:id,course_id,title,degree,is_final',
             ])
@@ -55,7 +60,11 @@ class CourseRepository extends BaseRepository implements CourseRepositoryInterfa
     public function findWithBasicRelations(int $id): Course
     {
         return $this->model->newQuery()
-            ->with(['category:id,name', 'instructors:id,name'])
+            ->with([
+                'category:id,name',
+                'instructors:id,name',
+                'qualificationSkills:id,name',
+            ])
             ->findOrFail($id);
     }
 

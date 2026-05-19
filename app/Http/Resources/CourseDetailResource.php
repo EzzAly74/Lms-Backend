@@ -25,6 +25,12 @@ class CourseDetailResource extends JsonResource
                     'image' => $i->image ? $i->getFileUrl($i->image) : null,
                 ]),
             ),
+            'qualification_skills' => $this->whenLoaded('qualificationSkills',
+                fn () => $this->qualificationSkills->map(fn ($s) => [
+                    'id'   => $s->id,
+                    'name' => $s->getTranslation('name', app()->getLocale()),
+                ]),
+            ),
             'sections'           => $this->whenLoaded('sections', fn () => $this->sections),
             'exams'              => $this->whenLoaded('exams', fn () => $this->exams->map(fn ($e) => [
                 'id'       => $e->id,

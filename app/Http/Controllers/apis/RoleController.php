@@ -7,12 +7,41 @@ use App\Http\Resources\RoleResource;
 use App\Services\RoleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use OpenApi\Annotations as OA;
 use Spatie\Permission\Models\Role;
 
 class RoleController extends ApiController
 {
     public function __construct(private readonly RoleService $service) {}
 
+    /**
+     * @OA\Get(
+     *     path="/roles",
+     *     tags={"Roles"},
+     *     summary="List roles (paginated).",
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(ref="#/components/parameters/AcceptLanguage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Search"),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Paginated roles",
+     *         @OA\JsonContent(
+     *             allOf={
+     *                 @OA\Schema(ref="#/components/schemas/SuccessResponse"),
+     *                 @OA\Schema(@OA\Property(
+     *                     property="result",
+     *                     type="array",
+     *                     @OA\Items(ref="#/components/schemas/Role")
+     *                 ))
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden")
+     * )
+     */
     public function index(Request $request): JsonResponse
     {
         $roles = $this->service->paginate(
@@ -22,6 +51,31 @@ class RoleController extends ApiController
         return $this->paginated(__('messages.retrieved'), $roles);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/roles/all",
+     *     tags={"Roles"},
+     *     summary="List ALL roles (no pagination). For select dropdowns.",
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(ref="#/components/parameters/AcceptLanguage"),
+     *     @OA\Response(
+     *         response=200,
+     *         description="All roles",
+     *         @OA\JsonContent(
+     *             allOf={
+     *                 @OA\Schema(ref="#/components/schemas/SuccessResponse"),
+     *                 @OA\Schema(@OA\Property(
+     *                     property="result",
+     *                     type="array",
+     *                     @OA\Items(ref="#/components/schemas/Role")
+     *                 ))
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden")
+     * )
+     */
     public function all(): JsonResponse
     {
         return $this->success(__('messages.retrieved'),
@@ -29,12 +83,69 @@ class RoleController extends ApiController
         );
     }
 
+    /**
+     * @OA\Get(
+     *     path="/roles/{role}",
+     *     tags={"Roles"},
+     *     summary="Show a role (with permissions).",
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(ref="#/components/parameters/AcceptLanguage"),
+     *     @OA\Parameter(name="role", in="path", required=true, @OA\Schema(type="integer", minimum=1)),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Role detail",
+     *         @OA\JsonContent(
+     *             allOf={
+     *                 @OA\Schema(ref="#/components/schemas/SuccessResponse"),
+     *                 @OA\Schema(@OA\Property(property="result", ref="#/components/schemas/Role"))
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=404, ref="#/components/responses/NotFound")
+     * )
+     */
     public function show(Role $role): JsonResponse
     {
         $role = $this->service->find($role->id);
         return $this->success(__('messages.retrieved'), new RoleResource($role));
     }
 
+    /**
+     * @OA\Post(
+     *     path="/roles",
+     *     tags={"Roles"},
+     *     summary="Create a role with permissions.",
+     *     security={{"BearerAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name"},
+     *             @OA\Property(property="name",        type="string", maxLength=255),
+     *             @OA\Property(
+     *                 property="permissions",
+     *                 type="array",
+     *                 nullable=true,
+     *                 @OA\Items(type="string", description="Existing permission name.")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Created",
+     *         @OA\JsonContent(
+     *             allOf={
+     *                 @OA\Schema(ref="#/components/schemas/SuccessResponse"),
+     *                 @OA\Schema(@OA\Property(property="result", ref="#/components/schemas/Role"))
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=422, ref="#/components/responses/ValidationError")
+     * )
+     */
     public function store(RoleRequest $request): JsonResponse
     {
         $data = $request->validated();
@@ -42,6 +153,42 @@ class RoleController extends ApiController
         return $this->created(__('messages.created'), new RoleResource($role));
     }
 
+    /**
+     * @OA\Put(
+     *     path="/roles/{role}",
+     *     tags={"Roles"},
+     *     summary="Update a role and its permissions.",
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(name="role", in="path", required=true, @OA\Schema(type="integer", minimum=1)),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name"},
+     *             @OA\Property(property="name",        type="string", maxLength=255),
+     *             @OA\Property(
+     *                 property="permissions",
+     *                 type="array",
+     *                 nullable=true,
+     *                 @OA\Items(type="string", description="Existing permission name.")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Updated",
+     *         @OA\JsonContent(
+     *             allOf={
+     *                 @OA\Schema(ref="#/components/schemas/SuccessResponse"),
+     *                 @OA\Schema(@OA\Property(property="result", ref="#/components/schemas/Role"))
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=404, ref="#/components/responses/NotFound"),
+     *     @OA\Response(response=422, ref="#/components/responses/ValidationError")
+     * )
+     */
     public function update(Role $role, RoleRequest $request): JsonResponse
     {
         $data = $request->validated();
@@ -49,6 +196,19 @@ class RoleController extends ApiController
         return $this->success(__('messages.updated'), new RoleResource($role));
     }
 
+    /**
+     * @OA\Delete(
+     *     path="/roles/{role}",
+     *     tags={"Roles"},
+     *     summary="Delete a role.",
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(name="role", in="path", required=true, @OA\Schema(type="integer", minimum=1)),
+     *     @OA\Response(response=200, description="Deleted", @OA\JsonContent(ref="#/components/schemas/EmptyResponse")),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=404, ref="#/components/responses/NotFound")
+     * )
+     */
     public function destroy(Role $role): JsonResponse
     {
         $this->service->delete($role);

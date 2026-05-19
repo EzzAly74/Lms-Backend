@@ -37,6 +37,8 @@ class CourseRequest extends FormRequest
             'allow_attendances'  => 'nullable|boolean',
             'instructors'        => 'required|array|min:1',
             'instructors.*'      => 'required|exists:instructors,id',
+            'qualification_skill_ids'   => 'nullable|array',
+            'qualification_skill_ids.*' => 'integer|distinct|exists:qualification_skills,id',
         ];
     }
 }

@@ -54,13 +54,18 @@ class CourseService
         $data['is_evaluate']       = (bool) ($data['is_evaluate']       ?? false);
         $data['allow_attendances'] = (bool) ($data['allow_attendances'] ?? false);
 
-        $instructors = $data['instructors'] ?? [];
-        unset($data['instructors']);
+        $instructors           = $data['instructors']             ?? [];
+        $qualificationSkillIds = $data['qualification_skill_ids'] ?? [];
+        unset($data['instructors'], $data['qualification_skill_ids']);
 
         $course = $this->courseRepository->create($data);
 
         if ($instructors) {
             $course->instructors()->attach($instructors);
+        }
+
+        if ($qualificationSkillIds) {
+            $course->qualificationSkills()->sync(array_values(array_unique($qualificationSkillIds)));
         }
 
         return $this->courseRepository->findWithBasicRelations($course->id);
@@ -76,13 +81,21 @@ class CourseService
         $data['is_evaluate']       = (bool) ($data['is_evaluate']       ?? false);
         $data['allow_attendances'] = (bool) ($data['allow_attendances'] ?? false);
 
-        $instructors = $data['instructors'] ?? null;
-        unset($data['instructors']);
+        $instructors           = $data['instructors']             ?? null;
+        $hasSkillsPayload      = array_key_exists('qualification_skill_ids', $data);
+        $qualificationSkillIds = $data['qualification_skill_ids'] ?? null;
+        unset($data['instructors'], $data['qualification_skill_ids']);
 
         $course = $this->courseRepository->update($course, $data);
 
         if (!is_null($instructors)) {
             $course->instructors()->sync($instructors);
+        }
+
+        if ($hasSkillsPayload) {
+            $course->qualificationSkills()->sync(
+                array_values(array_unique((array) ($qualificationSkillIds ?? []))),
+            );
         }
 
         return $this->courseRepository->findWithBasicRelations($course->id);

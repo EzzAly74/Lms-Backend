@@ -24,6 +24,7 @@ use App\Repositories\Contracts\FormRepositoryInterface;
 use App\Repositories\Contracts\InstructorRepositoryInterface;
 use App\Repositories\Contracts\NotificationRepositoryInterface;
 use App\Repositories\Contracts\OnlineEnrollmentRepositoryInterface;
+use App\Repositories\Contracts\QualificationSkillRepositoryInterface;
 use App\Repositories\Contracts\RoleRepositoryInterface;
 use App\Repositories\Contracts\SettingRepositoryInterface;
 use App\Repositories\Contracts\TestimonialRepositoryInterface;
@@ -52,6 +53,7 @@ use App\Repositories\Eloquents\FormRepository;
 use App\Repositories\Eloquents\InstructorRepository;
 use App\Repositories\Eloquents\NotificationRepository;
 use App\Repositories\Eloquents\OnlineEnrollmentRepository;
+use App\Repositories\Eloquents\QualificationSkillRepository;
 use App\Repositories\Eloquents\RoleRepository;
 use App\Repositories\Eloquents\SettingRepository;
 use App\Repositories\Eloquents\TestimonialRepository;
@@ -111,6 +113,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(SettingRepositoryInterface::class,             SettingRepository::class);
         $this->app->bind(OnlineEnrollmentRepositoryInterface::class,    OnlineEnrollmentRepository::class);
         $this->app->bind(AttendanceRepositoryInterface::class,          AttendanceRepository::class);
+        $this->app->bind(QualificationSkillRepositoryInterface::class,  QualificationSkillRepository::class);
     }
 
     public function boot(): void

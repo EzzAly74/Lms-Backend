@@ -70,6 +70,16 @@ class Course extends Model
         return $this->belongsToMany(Instructor::class, 'courses_instructors', 'course_id', 'instructor_id');
     }
 
+    public function qualificationSkills()
+    {
+        return $this->belongsToMany(
+            QualificationSkill::class,
+            'course_qualification_skills',
+            'course_id',
+            'qualification_skill_id',
+        );
+    }
+
     public function users()
     {
         return $this->belongsToMany(User::class, 'users_courses', 'course_id', 'user_id')

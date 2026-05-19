@@ -10,12 +10,48 @@ use App\Models\Course;
 use App\Services\OnlineEnrollmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use OpenApi\Annotations as OA;
 
 class OnlineEnrollmentController extends ApiController
 {
     public function __construct(private readonly OnlineEnrollmentService $enrollmentService) {}
 
-    /** List users enrolled in an online course. */
+    /**
+     * @OA\Get(
+     *     path="/courses/{course}/online-users",
+     *     tags={"Online Enrollment"},
+     *     summary="Admin: paginated list of users enrolled in an online course.",
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(ref="#/components/parameters/AcceptLanguage"),
+     *     @OA\Parameter(ref="#/components/parameters/Page"),
+     *     @OA\Parameter(ref="#/components/parameters/PerPage"),
+     *     @OA\Parameter(ref="#/components/parameters/Search"),
+     *     @OA\Parameter(
+     *         name="course",
+     *         in="path",
+     *         required=true,
+     *         description="Course identifier",
+     *         @OA\Schema(type="integer", minimum=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Paginated online enrollments",
+     *         @OA\JsonContent(
+     *             allOf={
+     *                 @OA\Schema(ref="#/components/schemas/SuccessResponse"),
+     *                 @OA\Schema(@OA\Property(
+     *                     property="result",
+     *                     type="array",
+     *                     @OA\Items(ref="#/components/schemas/OnlineEnrollment")
+     *                 ))
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=404, ref="#/components/responses/NotFound")
+     * )
+     */
     public function index(Request $request, Course $course): JsonResponse
     {
         $enrollments = $this->enrollmentService->paginate(
@@ -27,7 +63,38 @@ class OnlineEnrollmentController extends ApiController
         return $this->paginated(__('messages.retrieved'), UsersCourseResource::collection($enrollments));
     }
 
-    /** Attach (add without removing) users to an online course. */
+    /**
+     * @OA\Post(
+     *     path="/courses/{course}/online-users",
+     *     tags={"Online Enrollment"},
+     *     summary="Admin: attach users to an online course (additive; does not remove existing enrollments).",
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="course",
+     *         in="path",
+     *         required=true,
+     *         description="Course identifier",
+     *         @OA\Schema(type="integer", minimum=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"user_ids"},
+     *             @OA\Property(
+     *                 property="user_ids",
+     *                 type="array",
+     *                 minItems=1,
+     *                 @OA\Items(type="integer", example=42)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=201, description="Users attached", @OA\JsonContent(ref="#/components/schemas/EmptyResponse")),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=404, ref="#/components/responses/NotFound"),
+     *     @OA\Response(response=422, ref="#/components/responses/ValidationError")
+     * )
+     */
     public function store(EnrollUsersRequest $request, Course $course): JsonResponse
     {
         $this->enrollmentService->attach($course, $request->validated('user_ids'));
@@ -36,8 +103,35 @@ class OnlineEnrollmentController extends ApiController
     }
 
     /**
-     * Sync users for an online course (replaces current enrollment list).
-     * Supports toggling for_public via { for_public: true, user_ids: [] }.
+     * @OA\Put(
+     *     path="/courses/{course}/online-users",
+     *     tags={"Online Enrollment"},
+     *     summary="Admin: sync users for an online course (replaces the current enrollment list). Supports toggling for_public.",
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="course",
+     *         in="path",
+     *         required=true,
+     *         description="Course identifier",
+     *         @OA\Schema(type="integer", minimum=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="for_public", type="boolean", description="When true, marks the online course as open to the public."),
+     *             @OA\Property(
+     *                 property="user_ids",
+     *                 type="array",
+     *                 @OA\Items(type="integer", example=42)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Enrollment list synced", @OA\JsonContent(ref="#/components/schemas/EmptyResponse")),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=404, ref="#/components/responses/NotFound"),
+     *     @OA\Response(response=422, ref="#/components/responses/ValidationError")
+     * )
      */
     public function update(SyncEnrollmentRequest $request, Course $course): JsonResponse
     {
@@ -54,7 +148,33 @@ class OnlineEnrollmentController extends ApiController
         return $this->success(__('messages.updated'));
     }
 
-    /** Remove a single user from an online course. */
+    /**
+     * @OA\Delete(
+     *     path="/courses/{course}/online-users",
+     *     tags={"Online Enrollment"},
+     *     summary="Admin: remove a single user from an online course.",
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="course",
+     *         in="path",
+     *         required=true,
+     *         description="Course identifier",
+     *         @OA\Schema(type="integer", minimum=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"user_id"},
+     *             @OA\Property(property="user_id", type="integer", example=42)
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="User detached", @OA\JsonContent(ref="#/components/schemas/EmptyResponse")),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=404, ref="#/components/responses/NotFound"),
+     *     @OA\Response(response=422, ref="#/components/responses/ValidationError")
+     * )
+     */
     public function destroy(DetachUserRequest $request, Course $course): JsonResponse
     {
         $this->enrollmentService->detach($course, $request->validated('user_id'));
