@@ -135,4 +135,20 @@ class CourseRatingController extends ApiController
 
         return $this->deleted();
     }
+
+    /**
+     * All ratings across all courses (admin only).
+     * Supports filters: ?course_id, ?instructor_id, ?search
+     */
+    public function allRatings(Request $request): JsonResponse
+    {
+        $ratings = $this->ratingService->paginateAll(
+            perPage:      (int) $request->get('per_page', 20),
+            courseId:     $request->get('course_id') ? (int) $request->get('course_id') : null,
+            instructorId: $request->get('instructor_id') ? (int) $request->get('instructor_id') : null,
+            search:       $request->get('search'),
+        );
+
+        return $this->paginated(__('messages.retrieved'), CourseRatingResource::collection($ratings));
+    }
 }

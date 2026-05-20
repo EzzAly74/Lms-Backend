@@ -45,6 +45,7 @@ class DatabaseSeeder extends Seeder
         // Catalogue.
         $this->call(CategorySeeder::class);
         $this->call(InstructorSeeder::class);
+        $this->call(JobTitleSeeder::class);
 
         // Course tree.
         $this->call(CourseSeeder::class);

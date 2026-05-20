@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Repositories\Contracts\AboutRepositoryInterface;
+use App\Repositories\Contracts\JobTitleRepositoryInterface;
 use App\Repositories\Contracts\AdminRepositoryInterface;
 use App\Repositories\Contracts\ArticleRepositoryInterface;
 use App\Repositories\Contracts\AttendanceRepositoryInterface;
@@ -32,6 +33,7 @@ use App\Repositories\Contracts\UserEnrollmentRepositoryInterface;
 use App\Repositories\Contracts\UserProgressRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Repositories\Eloquents\AboutRepository;
+use App\Repositories\Eloquents\JobTitleRepository;
 use App\Repositories\Eloquents\AdminRepository;
 use App\Repositories\Eloquents\ArticleRepository;
 use App\Repositories\Eloquents\AttendanceRepository;
@@ -114,6 +116,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(OnlineEnrollmentRepositoryInterface::class,    OnlineEnrollmentRepository::class);
         $this->app->bind(AttendanceRepositoryInterface::class,          AttendanceRepository::class);
         $this->app->bind(QualificationSkillRepositoryInterface::class,  QualificationSkillRepository::class);
+        $this->app->bind(JobTitleRepositoryInterface::class,            JobTitleRepository::class);
     }
 
     public function boot(): void

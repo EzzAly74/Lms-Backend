@@ -59,11 +59,22 @@ class CourseController extends ApiController
      */
     public function index(Request $request): JsonResponse
     {
+        $active = null;
+        if ($request->has('active')) {
+            $active = filter_var($request->active, FILTER_VALIDATE_BOOLEAN);
+        } elseif ($request->filled('status')) {
+            $active = match ($request->get('status')) {
+                'active'   => true,
+                'inactive', 'pending', 'upcoming' => false,
+                default    => null,
+            };
+        }
+
         $courses = $this->courseService->list(
             perPage:    (int) $request->get('per_page', 15),
             search:     $request->get('search'),
             categoryId: $request->integer('category_id') ?: null,
-            active:     $request->has('active') ? filter_var($request->active, FILTER_VALIDATE_BOOLEAN) : null,
+            active:     $active,
             courseType: $request->get('course_type'),
         );
 

@@ -48,6 +48,8 @@ class CourseService
     {
         if ($image) {
             $data['image'] = $this->uploadRequestFile('Course', request(), 'image');
+        } else {
+            $data['image'] = null;
         }
         $data['active']            = (bool) ($data['active']            ?? false);
         $data['outside_materials'] = (bool) ($data['outside_materials'] ?? false);

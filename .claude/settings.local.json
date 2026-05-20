@@ -62,7 +62,17 @@
       "Bash(sed -i \"s/onPage\\(event: { first?: number; rows?: number }\\)/onPage\\(event: { first?: number | null; rows?: number | null }\\)/g\" app/features/courses/pages/course-list/course-list.component.ts app/features/users/pages/user-list/user-list.component.ts)",
       "Bash(sed -i \"s/\\(event.rows ?? 20\\)/\\(event.rows ?? 20\\) + 1/g\" app/features/courses/pages/course-list/course-list.component.ts app/features/users/pages/user-list/user-list.component.ts)",
       "Bash(dir /s /b dist\\\\*.js)",
-      "Bash(Get-ChildItem -Path \"D:\\\\2b-source-code\\\\2B-Academy\\\\routes\\\\apis\" -ErrorAction SilentlyContinue)"
+      "Bash(Get-ChildItem -Path \"D:\\\\2b-source-code\\\\2B-Academy\\\\routes\\\\apis\" -ErrorAction SilentlyContinue)",
+      "Bash(Get-ChildItem -Path \"D:\\\\2b-source-code\\\\2B-Academy\" -Directory)",
+      "WebFetch(domain:www.figma.com)",
+      "Bash(Get-ChildItem -Path \"D:\\\\2b-source-code\\\\2B-Academy-Angular\" -Recurse -Directory)",
+      "PowerShell(Get-ChildItem \"D:\\\\2b-source-code\\\\2B-Academy\\\\database\\\\migrations\\\\\" | Where-Object {$_.Name -match \"\\(user|job_title|qualification|course\\)\" } | Select-Object -First 5 Name | Sort-Object Name)",
+      "Bash(php -l app/Models/JobTitle.php app/Models/AdminMessage.php app/Models/AdminMessageRecipient.php app/Models/LmsResource.php app/Services/JobTitleService.php app/Services/AdminMessageService.php app/Services/LmsResourceService.php app/Services/DashboardService.php)",
+      "Bash(php -l app/Http/Controllers/apis/JobTitleController.php app/Http/Controllers/apis/AdminMessageController.php app/Http/Controllers/apis/LmsResourceController.php app/Http/Controllers/apis/QuizController.php app/Http/Controllers/apis/CourseRatingController.php)",
+      "Bash(php artisan *)",
+      "PowerShell(Get-ChildItem \"D:\\\\2b-source-code\\\\2B-Academy-Angular\\\\node_modules\\\\primeng\" -Directory | Where-Object { $_.Name -in @\\('select','datepicker','textarea','tabs','tablist','tabpanels','tabpanel'\\) } | Select-Object Name)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"Exit: $?\")"
     ]
   }
 }

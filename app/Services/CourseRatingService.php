@@ -27,4 +27,9 @@ class CourseRatingService
     {
         return $this->ratingRepository->delete($rating);
     }
+
+    public function paginateAll(int $perPage = 20, ?int $courseId = null, ?int $instructorId = null, ?string $search = null): \Illuminate\Pagination\LengthAwarePaginator
+    {
+        return $this->ratingRepository->paginateAll($perPage, $courseId, $instructorId, $search);
+    }
 }

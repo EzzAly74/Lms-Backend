@@ -90,7 +90,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (AuthenticationException $_e, Request $request) {
             if ($request->is('api/*')) {
                 return response()->json([
-                    'success' => false,
+                    'status'  => 'error',
                     'message' => __('messages.unauthenticated'),
                     'errors'  => [],
                 ], 401);
@@ -100,7 +100,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (ValidationException $e, Request $request) {
             if ($request->is('api/*')) {
                 return response()->json([
-                    'success' => false,
+                    'status'  => 'error',
                     'message' => __('messages.validation_failed'),
                     'errors'  => $e->errors(),
                 ], 422);
@@ -110,7 +110,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (NotFoundHttpException $_e, Request $request) {
             if ($request->is('api/*')) {
                 return response()->json([
-                    'success' => false,
+                    'status'  => 'error',
                     'message' => __('messages.not_found'),
                     'errors'  => [],
                 ], 404);
@@ -121,7 +121,7 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->is('api/*')) {
                 $status = method_exists($e, 'getStatusCode') ? $e->getStatusCode() : 500;
                 return response()->json([
-                    'success' => false,
+                    'status'  => 'error',
                     'message' => $e->getMessage() ?: __('messages.server_error'),
                     'errors'  => [],
                 ], $status);

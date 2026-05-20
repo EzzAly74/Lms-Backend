@@ -12,6 +12,8 @@ class QualificationSkillResource extends JsonResource
         return [
             'id'            => $this->id,
             'name'          => $this->getTranslation('name', app()->getLocale()),
+            'name_en'       => $this->getTranslation('name', 'en'),
+            'name_ar'       => $this->getTranslation('name', 'ar'),
             'courses_count' => $this->whenCounted('courses'),
             'created_at'    => $this->created_at?->format('Y-m-d'),
         ];

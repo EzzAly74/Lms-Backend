@@ -44,6 +44,18 @@ class CourseResource extends JsonResource
             'outside_materials'  => (bool) $this->outside_materials,
             'allow_attendances'  => (bool) $this->allow_attendances,
             'created_at'         => $this->created_at?->format('Y-m-d'),
+            'updated_at'         => $this->updated_at?->format('Y-m-d'),
+            'type'               => $this->course_type,
+            'status'             => $this->active ? 'active' : 'inactive',
+            'users_count'        => $this->users_count ?? null,
+            'cohorts_count'      => $this->sessions_count ?? null,
+            'instructor'         => $this->whenLoaded('instructors', function () {
+                $first = $this->instructors->first();
+                return $first ? [
+                    'id'   => $first->id,
+                    'name' => $first->getTranslation('name', app()->getLocale()),
+                ] : null;
+            }),
         ];
     }
 }

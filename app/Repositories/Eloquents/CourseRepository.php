@@ -27,6 +27,7 @@ class CourseRepository extends BaseRepository implements CourseRepositoryInterfa
                 'instructors:id,name',
                 'qualificationSkills:id,name',
             ])
+            ->withCount(['users as users_count'])
             ->when($search, fn ($q) => $q->where('title', 'LIKE', "%{$search}%"))
             ->when($categoryId, fn ($q) => $q->where('category_id', $categoryId))
             ->when(!is_null($active), fn ($q) => $q->where('active', $active))
@@ -54,6 +55,7 @@ class CourseRepository extends BaseRepository implements CourseRepositoryInterfa
                 'sections',
                 'exams:id,course_id,title,degree,is_final',
             ])
+            ->withCount(['users as users_count'])
             ->findOrFail($id);
     }
 

@@ -31,4 +31,25 @@ class CourseRatingRepository extends BaseRepository implements CourseRatingRepos
             $data,
         );
     }
+
+    public function paginateAll(int $perPage, ?int $courseId, ?int $instructorId, ?string $search): LengthAwarePaginator
+    {
+        return $this->model->newQuery()
+            ->with([
+                'user:id,name',
+                'course:id,title',
+                'course.instructors:id,name',
+            ])
+            ->when($courseId, fn ($q) => $q->where('course_id', $courseId))
+            ->when($instructorId, fn ($q) => $q->whereHas(
+                'course.instructors',
+                fn ($q2) => $q2->where('instructors.id', $instructorId),
+            ))
+            ->when($search, fn ($q) => $q->where(function ($q2) use ($search) {
+                $q2->whereHas('user', fn ($q3) => $q3->where('name', 'LIKE', "%{$search}%"))
+                   ->orWhere('review', 'LIKE', "%{$search}%");
+            }))
+            ->latest()
+            ->paginate($perPage);
+    }
 }
