@@ -7,7 +7,12 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 interface UserRepositoryInterface extends BaseRepositoryInterface
 {
-    public function paginateWithSearch(int $perPage, ?string $search): LengthAwarePaginator;
+    public function paginateWithSearch(
+        int     $perPage,
+        ?string $search,
+        ?string $role        = null,
+        ?string $learnerType = null,
+    ): LengthAwarePaginator;
 
     public function findBySystemId(string $systemId): ?User;
 

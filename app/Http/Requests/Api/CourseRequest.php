@@ -65,6 +65,7 @@ class CourseRequest extends FormRequest
             'price'                   => 'nullable|numeric|min:0',
             'currency'                => 'nullable|string|max:10',
             'hours'                   => 'required|integer|min:1',
+            'max_learners'            => 'nullable|integer|min:1|max:10000',
             'language'                => 'nullable|string|max:50',
             'level'                   => 'nullable|string|max:50',
             'certificate'             => 'required|boolean',

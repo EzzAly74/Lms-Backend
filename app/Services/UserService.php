@@ -13,9 +13,15 @@ class UserService
         private readonly UserRepositoryInterface $userRepository,
     ) {}
 
-    public function list(int $perPage = 20, ?string $search = null): LengthAwarePaginator
-    {
-        return $this->userRepository->paginateWithSearch($perPage, $search);
+    public function list(
+        int     $perPage     = 20,
+        ?string $search      = null,
+        ?string $role        = null,
+        ?string $learnerType = null,
+    ): LengthAwarePaginator {
+        return $this->userRepository->paginateWithSearch(
+            $perPage, $search, $role, $learnerType,
+        );
     }
 
     public function findOrFail(int $id): User

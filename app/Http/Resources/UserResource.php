@@ -17,6 +17,8 @@ class UserResource extends JsonResource
             'system_id'       => $this->system_id,
             'machine_code'    => $this->machine_code,
             'department_name' => $this->department_name,
+            'job_title'       => $this->job_title,
+            'learner_type'    => $this->learner_type,
             'roles'           => $this->whenLoaded('roles', fn () => $this->roles->pluck('name')),
             'created_at'      => $this->created_at?->format('Y-m-d H:i:s'),
         ];

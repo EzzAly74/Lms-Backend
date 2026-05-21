@@ -35,6 +35,7 @@ class DatabaseSeeder extends Seeder
 
         // CMS / settings.
         $this->call(SettingSeeder::class);
+        $this->call(PlatformConfigSeeder::class);
         $this->call(AboutSeeder::class);
         $this->call(ArticleSeeder::class);
         $this->call(TestimonialSeeder::class);

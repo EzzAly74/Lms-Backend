@@ -24,6 +24,16 @@ class UserController extends ApiController
      *     @OA\Parameter(ref="#/components/parameters/Page"),
      *     @OA\Parameter(ref="#/components/parameters/PerPage"),
      *     @OA\Parameter(ref="#/components/parameters/Search"),
+     *     @OA\Parameter(
+     *         name="role", in="query", required=false,
+     *         description="Filter by user role tab.",
+     *         @OA\Schema(type="string", enum={"learner","instructor"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="learner_type", in="query", required=false,
+     *         description="Filter learners by delivery preference.",
+     *         @OA\Schema(type="string", enum={"online","offline","hybrid"})
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Paginated users",
@@ -44,9 +54,20 @@ class UserController extends ApiController
      */
     public function index(Request $request): JsonResponse
     {
+        $role = $request->filled('role') && in_array($request->get('role'), ['learner', 'instructor'], true)
+            ? (string) $request->get('role')
+            : null;
+
+        $learnerType = $request->filled('learner_type')
+            && in_array($request->get('learner_type'), ['online', 'offline', 'hybrid'], true)
+                ? (string) $request->get('learner_type')
+                : null;
+
         $users = $this->userService->list(
-            perPage: (int) $request->get('per_page', 20),
-            search:  $request->get('search'),
+            perPage:     (int) $request->get('per_page', 20),
+            search:      $request->get('search'),
+            role:        $role,
+            learnerType: $learnerType,
         );
 
         return $this->paginated(__('messages.retrieved'), UserResource::collection($users));
@@ -161,8 +182,11 @@ class UserController extends ApiController
     {
         $data = $request->validate([
             'name'            => 'sometimes|string|max:255',
+            'email'           => 'sometimes|nullable|email|max:255',
             'phone'           => 'sometimes|nullable|string|max:50',
             'department_name' => 'sometimes|nullable|string|max:255',
+            'job_title'       => 'sometimes|nullable|string|max:255',
+            'learner_type'    => 'sometimes|nullable|in:online,offline,hybrid',
         ]);
 
         $user = $this->userService->update($user, $data);

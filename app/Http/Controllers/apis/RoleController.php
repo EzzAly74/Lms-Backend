@@ -8,6 +8,7 @@ use App\Services\RoleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use OpenApi\Annotations as OA;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 class RoleController extends ApiController
@@ -48,7 +49,7 @@ class RoleController extends ApiController
             (int) $request->get('per_page', 20),
             $request->get('search')
         );
-        return $this->paginated(__('messages.retrieved'), $roles);
+        return $this->paginated(__('messages.retrieved'), RoleResource::collection($roles));
     }
 
     /**
@@ -81,6 +82,53 @@ class RoleController extends ApiController
         return $this->success(__('messages.retrieved'),
             RoleResource::collection($this->service->all())
         );
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/permissions",
+     *     tags={"Roles"},
+     *     summary="List every permission available in the system, grouped by table.",
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="All permissions grouped by their table",
+     *         @OA\JsonContent(
+     *             allOf={
+     *                 @OA\Schema(ref="#/components/schemas/SuccessResponse"),
+     *                 @OA\Schema(@OA\Property(
+     *                     property="result",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         @OA\Property(property="table",       type="string"),
+     *                         @OA\Property(property="permissions", type="array", @OA\Items(type="string"))
+     *                     )
+     *                 ))
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden")
+     * )
+     */
+    public function permissions(Request $request): JsonResponse
+    {
+        $guard = $request->query('guard');
+
+        $grouped = Permission::query()
+            ->when($guard, fn ($q) => $q->where('guard_name', $guard))
+            ->orderBy('table_name')
+            ->orderBy('name')
+            ->get(['id', 'name', 'table_name', 'guard_name'])
+            ->groupBy('table_name')
+            ->map(fn ($items, $table) => [
+                'table'       => (string) $table,
+                'permissions' => $items->pluck('name')->values()->all(),
+            ])
+            ->values()
+            ->all();
+
+        return $this->success(__('messages.retrieved'), $grouped);
     }
 
     /**
@@ -149,7 +197,11 @@ class RoleController extends ApiController
     public function store(RoleRequest $request): JsonResponse
     {
         $data = $request->validated();
-        $role = $this->service->create($data['name'], $data['permissions'] ?? []);
+        $role = $this->service->create(
+            $data['name'],
+            $data['permissions'] ?? [],
+            $data['guard_name'] ?? 'admin',
+        );
         return $this->created(__('messages.created'), new RoleResource($role));
     }
 

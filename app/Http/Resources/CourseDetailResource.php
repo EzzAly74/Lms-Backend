@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -9,6 +10,22 @@ class CourseDetailResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        // Per-course override for "Max per Cohort". Falls back to the
+        // platform-wide `default_cohort_size` setting so the Course Settings
+        // panel always shows a useful number instead of an em-dash.
+        $maxLearners = $this->max_learners;
+        if ($maxLearners === null) {
+            $maxLearners = (int) (Setting::query()
+                ->where('key', 'default_cohort_size')
+                ->value('value') ?? 30);
+        }
+
+        // The pass percent isn't stored per-course yet — surface the platform
+        // default so the certificate row can render "Yes — min 75%".
+        $passPercent = (int) (Setting::query()
+            ->where('key', 'min_passing_score')
+            ->value('value') ?? 0);
+
         return [
             'id'                 => $this->id,
             'title'              => $this->getTranslation('title', app()->getLocale()),
@@ -41,12 +58,15 @@ class CourseDetailResource extends JsonResource
             'image'              => $this->image ? $this->getFileUrl($this->image) : null,
             'intro_video'        => $this->intro_video,
             'hours'              => $this->hours,
+            'max_learners'       => $maxLearners,
+            'max_learners_override' => $this->max_learners,
             'language'           => $this->language,
             'level'              => $this->level,
             'price'              => $this->price,
             'currency'           => $this->currency,
-            'certificate'        => (bool) $this->certificate,
-            'title_for_certificate' => $this->getTranslation('title_for_certificate', app()->getLocale()),
+            'certificate'              => (bool) $this->certificate,
+            'certificate_pass_percent' => $this->certificate ? $passPercent : null,
+            'title_for_certificate'    => $this->getTranslation('title_for_certificate', app()->getLocale()),
             'active'             => (bool) $this->active,
             'for_public'         => (bool) $this->for_public,
             'is_evaluate'        => (bool) $this->is_evaluate,

@@ -62,13 +62,11 @@ class CourseController extends ApiController
         $active = null;
         if ($request->has('active')) {
             $active = filter_var($request->active, FILTER_VALIDATE_BOOLEAN);
-        } elseif ($request->filled('status')) {
-            $active = match ($request->get('status')) {
-                'active'   => true,
-                'inactive', 'pending', 'upcoming' => false,
-                default    => null,
-            };
         }
+
+        $status = $request->filled('status') && $request->get('status') !== 'all'
+            ? (string) $request->get('status')
+            : null;
 
         $courses = $this->courseService->list(
             perPage:    (int) $request->get('per_page', 15),
@@ -76,9 +74,45 @@ class CourseController extends ApiController
             categoryId: $request->integer('category_id') ?: null,
             active:     $active,
             courseType: $request->get('course_type'),
+            status:     $status,
         );
 
         return $this->paginated(__('messages.retrieved'), CourseResource::collection($courses));
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/courses/tab-counts",
+     *     tags={"Courses"},
+     *     summary="Return total course counts grouped by admin tab. Computed in a single aggregate query.",
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Tab counts",
+     *         @OA\JsonContent(
+     *             allOf={
+     *                 @OA\Schema(ref="#/components/schemas/SuccessResponse"),
+     *                 @OA\Schema(@OA\Property(
+     *                     property="result",
+     *                     type="object",
+     *                     @OA\Property(property="all",      type="integer"),
+     *                     @OA\Property(property="active",   type="integer"),
+     *                     @OA\Property(property="inactive", type="integer"),
+     *                     @OA\Property(property="pending",  type="integer"),
+     *                     @OA\Property(property="upcoming", type="integer"),
+     *                 ))
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized")
+     * )
+     */
+    public function tabCounts(): JsonResponse
+    {
+        return $this->success(
+            __('messages.retrieved'),
+            $this->courseService->tabCounts(),
+        );
     }
 
     /**

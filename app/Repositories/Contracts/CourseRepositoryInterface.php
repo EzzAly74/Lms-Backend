@@ -14,7 +14,13 @@ interface CourseRepositoryInterface extends BaseRepositoryInterface
         ?int    $categoryId,
         ?bool   $active,
         ?string $courseType,
+        ?string $status = null,
     ): LengthAwarePaginator;
+
+    /**
+     * @return array{all: int, active: int, inactive: int, pending: int, upcoming: int}
+     */
+    public function tabCounts(): array;
 
     public function allActive(): Collection;
 

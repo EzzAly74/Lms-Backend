@@ -27,9 +27,9 @@ class RoleRepository implements RoleRepositoryInterface
         return Role::with('permissions')->findOrFail($id);
     }
 
-    public function create(string $name): Role
+    public function create(string $name, string $guardName = 'admin'): Role
     {
-        return Role::create(['name' => $name]);
+        return Role::create(['name' => $name, 'guard_name' => $guardName]);
     }
 
     public function update(Role $role, string $name): Role

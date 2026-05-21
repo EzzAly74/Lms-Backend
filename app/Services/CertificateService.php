@@ -13,14 +13,8 @@ class CertificateService
 
     public function paginate(int $perPage = 20, ?int $courseId = null): LengthAwarePaginator
     {
-        $examCerts = $this->repo->getExamCertificates($courseId)
-            ->map(fn ($ue) => $this->formatExamCert($ue));
-
-        $evalCerts = $this->repo->getEvalCertificates($courseId)
-            ->map(fn ($uce) => $this->formatEvalCert($uce));
-
-        $merged = $examCerts->merge($evalCerts)->sortByDesc('created_at')->values();
-        $page   = request()->input('page', 1);
+        $merged = $this->buildMergedCertificates($courseId);
+        $page   = (int) (request()->input('page', 1));
         $slice  = $merged->forPage($page, $perPage);
 
         return new LengthAwarePaginator(
@@ -35,13 +29,26 @@ class CertificateService
     /** Return all certificate entries for a specific course (exam + eval paths). */
     public function findByCourse(int $courseId): array
     {
+        return $this->buildMergedCertificates($courseId)->all();
+    }
+
+    /**
+     * Merge exam + evaluation certificates into a single, deduplicated, sorted
+     * Support\Collection. Both source collections are immediately converted via
+     * `toBase()` because `Eloquent\Collection::merge()` dedupes by primary key
+     * and would crash on plain-array entries with "getKey() on array".
+     */
+    private function buildMergedCertificates(?int $courseId): \Illuminate\Support\Collection
+    {
         $examCerts = $this->repo->getExamCertificates($courseId)
+            ->toBase()
             ->map(fn ($ue) => $this->formatExamCert($ue));
 
         $evalCerts = $this->repo->getEvalCertificates($courseId)
+            ->toBase()
             ->map(fn ($uce) => $this->formatEvalCert($uce));
 
-        return $examCerts->merge($evalCerts)->sortByDesc('created_at')->values()->all();
+        return $examCerts->merge($evalCerts)->sortByDesc('created_at')->values();
     }
 
     private function formatExamCert($ue): array

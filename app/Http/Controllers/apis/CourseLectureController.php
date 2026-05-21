@@ -5,14 +5,19 @@ namespace App\Http\Controllers\apis;
 use App\Http\Requests\Api\CourseLectureRequest;
 use App\Http\Resources\CourseLectureResource;
 use App\Http\Resources\CourseSectionResource;
+use App\Http\Traits\HasFile;
 use App\Models\Course;
 use App\Models\CourseLecture;
 use App\Services\CourseLectureService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use OpenApi\Annotations as OA;
 
 class CourseLectureController extends ApiController
 {
+    use HasFile;
+
     public function __construct(private readonly CourseLectureService $service) {}
 
     /**
@@ -49,6 +54,42 @@ class CourseLectureController extends ApiController
     {
         $sections = $this->service->listForCourse($course);
         return $this->success(__('messages.retrieved'), CourseSectionResource::collection($sections));
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/courses/{course}/modules",
+     *     tags={"Course Lectures"},
+     *     summary="Flat list of modules (lectures) for the admin Content tab.",
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(ref="#/components/parameters/AcceptLanguage"),
+     *     @OA\Parameter(
+     *         name="course", in="path", required=true,
+     *         description="Course id",
+     *         @OA\Schema(type="integer", minimum=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Flat list of modules",
+     *         @OA\JsonContent(
+     *             allOf={
+     *                 @OA\Schema(ref="#/components/schemas/SuccessResponse"),
+     *                 @OA\Schema(@OA\Property(
+     *                     property="result",
+     *                     type="array",
+     *                     @OA\Items(ref="#/components/schemas/CourseLecture")
+     *                 ))
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=404, ref="#/components/responses/NotFound")
+     * )
+     */
+    public function indexFlat(Course $course): JsonResponse
+    {
+        $lectures = $this->service->listFlatForCourse($course);
+        return $this->success(__('messages.retrieved'), CourseLectureResource::collection($lectures));
     }
 
     /**
@@ -170,5 +211,66 @@ class CourseLectureController extends ApiController
         abort_if($lecture->course_id !== $course->id, 404);
         $this->service->delete($lecture);
         return $this->deleted(__('messages.deleted'));
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/courses/{course}/lectures/upload",
+     *     tags={"Course Lectures"},
+     *     summary="Upload a document file for a module (returns storage path + metadata).",
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="course", in="path", required=true,
+     *         @OA\Schema(type="integer", minimum=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"file"},
+     *                 @OA\Property(property="file", type="string", format="binary")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Uploaded",
+     *         @OA\JsonContent(
+     *             allOf={
+     *                 @OA\Schema(ref="#/components/schemas/SuccessResponse"),
+     *                 @OA\Schema(@OA\Property(
+     *                     property="result",
+     *                     type="object",
+     *                     @OA\Property(property="path", type="string"),
+     *                     @OA\Property(property="url",  type="string"),
+     *                     @OA\Property(property="name", type="string"),
+     *                     @OA\Property(property="size", type="integer")
+     *                 ))
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(response=401, ref="#/components/responses/Unauthorized"),
+     *     @OA\Response(response=403, ref="#/components/responses/Forbidden"),
+     *     @OA\Response(response=422, ref="#/components/responses/ValidationError")
+     * )
+     */
+    public function uploadFile(Course $course, Request $request): JsonResponse
+    {
+        $request->validate([
+            'file' => 'required|file|max:51200|mimes:pdf,doc,docx,ppt,pptx,xls,xlsx,txt,jpg,jpeg,png,gif,webp',
+        ]);
+
+        $file = $request->file('file');
+        $originalName = $file->getClientOriginalName();
+        $size = $file->getSize();
+        $path = $this->uploadRequestFile('course-lectures', $request, 'file');
+
+        return $this->success(__('messages.created'), [
+            'path' => $path,
+            'url'  => $this->getFileUrl($path),
+            'name' => $originalName,
+            'size' => $size,
+        ]);
     }
 }

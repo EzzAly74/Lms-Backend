@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('settings', [SettingController::class, 'index']);
 
 Route::middleware(['auth.user', 'role:Admin'])->group(function () {
-    Route::get('admin/settings',  [SettingController::class, 'adminIndex']);
-    Route::put('admin/settings',  [SettingController::class, 'update']);
+    Route::get ('admin/settings',         [SettingController::class, 'adminIndex']);
+    Route::put ('admin/settings',         [SettingController::class, 'update']);
+    Route::post('admin/settings/upload',  [SettingController::class, 'upload']);
 });

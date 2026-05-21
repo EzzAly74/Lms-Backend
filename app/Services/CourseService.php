@@ -23,10 +23,19 @@ class CourseService
         ?int    $categoryId = null,
         ?bool   $active     = null,
         ?string $courseType = null,
+        ?string $status     = null,
     ): LengthAwarePaginator {
         return $this->courseRepository->paginateWithFilters(
-            $perPage, $search, $categoryId, $active, $courseType,
+            $perPage, $search, $categoryId, $active, $courseType, $status,
         );
+    }
+
+    /**
+     * @return array{all: int, active: int, inactive: int, pending: int, upcoming: int}
+     */
+    public function tabCounts(): array
+    {
+        return $this->courseRepository->tabCounts();
     }
 
     public function allActive(): Collection

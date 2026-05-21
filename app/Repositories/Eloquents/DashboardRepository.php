@@ -42,9 +42,13 @@ class DashboardRepository implements DashboardRepositoryInterface
 
     public function getTopCourses(int $limit): Collection
     {
-        return Course::active()
-            ->select('id', 'title')
-            ->selectRaw('(SELECT COUNT(*) FROM users_courses WHERE users_courses.course_id = courses.id) AS users_count')
+        return Course::query()
+            ->select('id', 'title', 'active')
+            ->with(['instructors:id,name'])
+            ->selectRaw('
+                (SELECT COUNT(*) FROM users_courses uc WHERE uc.course_id = courses.id)                                        AS users_count,
+                (SELECT COUNT(*) FROM users_courses uc WHERE uc.course_id = courses.id AND uc.updated_at > uc.created_at)      AS completed_count
+            ')
             ->orderByDesc('users_count')
             ->limit($limit)
             ->get();

@@ -13,6 +13,8 @@ class JobTitleResource extends JsonResource
             'id'                   => $this->id,
             'name'                 => $this->name,
             'qualifications_count' => $this->whenCounted('qualificationSkills'),
+            'employees_count'      => $this->whenCounted('users'),
+            'learners_count'       => (int) ($this->learners_count ?? 0),
             'qualifications'       => $this->whenLoaded(
                 'qualificationSkills',
                 fn () => $this->qualificationSkills->map(fn ($skill) => [
