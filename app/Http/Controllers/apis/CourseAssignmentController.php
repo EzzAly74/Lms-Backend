@@ -95,9 +95,31 @@ class CourseAssignmentController extends ApiController
      *     @OA\Response(response=422, ref="#/components/responses/ValidationError")
      * )
      */
+    public function indexAll(Request $request): JsonResponse
+    {
+        $assignments = $this->service->paginateAll(
+            $request->integer('course_id') ?: null,
+            $request->get('search'),
+            $request->integer('per_page', 20),
+        );
+        return $this->paginated(__('messages.retrieved'), CourseAssignmentResource::collection($assignments));
+    }
+
+    public function allSubmissions(Request $request): JsonResponse
+    {
+        $submissions = $this->service->paginateAllSubmissions(
+            $request->integer('user_id') ?: null,
+            $request->integer('course_id') ?: null,
+            $request->get('status'),
+            $request->integer('per_page', 20),
+        );
+        return $this->paginated(__('messages.retrieved'), UserCourseAssignmentResource::collection($submissions));
+    }
+
     public function store(Course $course, CourseAssignmentRequest $request): JsonResponse
     {
-        $assignment = $this->service->create($course, $request->validated()['title'], $request->file('file'));
+        $v = $request->validated();
+        $assignment = $this->service->create($course, $v['title'], $request->file('file'), $v['due_date'] ?? null);
         return $this->created(__('messages.created'), new CourseAssignmentResource($assignment));
     }
 
@@ -147,7 +169,8 @@ class CourseAssignmentController extends ApiController
     public function update(Course $course, CourseAssignment $assignment, CourseAssignmentRequest $request): JsonResponse
     {
         abort_if($assignment->course_id !== $course->id, 404);
-        $assignment = $this->service->update($assignment, $request->validated()['title'], $request->file('file'));
+        $v = $request->validated();
+        $assignment = $this->service->update($assignment, $v['title'], $request->file('file'), $v['due_date'] ?? null);
         return $this->success(__('messages.updated'), new CourseAssignmentResource($assignment));
     }
 

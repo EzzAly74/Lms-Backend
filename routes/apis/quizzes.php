@@ -11,5 +11,6 @@ use Illuminate\Support\Facades\Route;
 
 // Admin only — browse all quiz attempts
 Route::middleware(['auth.user', 'role:Admin'])->group(function () {
-    Route::get('quizzes', [QuizController::class, 'index']);
+    Route::get('quizzes',         [QuizController::class, 'index']);
+    Route::get('quizzes/{userExam}', [QuizController::class, 'show']);
 });

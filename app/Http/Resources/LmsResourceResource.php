@@ -25,6 +25,7 @@ class LmsResourceResource extends JsonResource
                 'id'   => $this->qualificationSkill->id,
                 'name' => $this->qualificationSkill->getTranslation('name', app()->getLocale()),
             ]),
+            'created_by_name' => $this->whenLoaded('createdByAdmin', fn () => $this->createdByAdmin?->name),
             'created_at'    => $this->created_at?->toDateTimeString(),
         ];
     }

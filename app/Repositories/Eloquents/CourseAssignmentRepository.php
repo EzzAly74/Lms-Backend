@@ -20,9 +20,20 @@ class CourseAssignmentRepository extends BaseRepository implements CourseAssignm
     public function listForCourse(Course $course): Collection
     {
         return $this->model->newQuery()
+            ->with('course:id,title')
             ->where('course_id', $course->id)
             ->orderBy('id')
             ->get();
+    }
+
+    public function paginateAll(?int $courseId, ?string $search, int $perPage): LengthAwarePaginator
+    {
+        return $this->model->newQuery()
+            ->with('course:id,title')
+            ->when($courseId, fn ($q) => $q->where('course_id', $courseId))
+            ->when($search, fn ($q) => $q->where('title', 'like', "%{$search}%"))
+            ->orderByDesc('id')
+            ->paginate($perPage);
     }
 
     public function createForCourse(Course $course, array $data): CourseAssignment
@@ -62,11 +73,13 @@ class CourseAssignmentRepository extends BaseRepository implements CourseAssignm
             ->findOrFail($id);
     }
 
-    public function paginateAllSubmissions(?int $userId, ?int $courseId, int $perPage): LengthAwarePaginator
+    public function paginateAllSubmissions(?int $userId, ?int $courseId, ?string $status, int $perPage): LengthAwarePaginator
     {
-        return UserCourseAssignment::with(['user:id,name', 'assignment.course:id,title'])
+        return UserCourseAssignment::with(['user:id,name,machine_code,department_name', 'assignment.course:id,title'])
             ->when($userId, fn ($q) => $q->where('user_id', $userId))
-            ->when($courseId, fn ($q) => $q->whereHas('assignment.course', fn ($inner) => $inner->where('id', $courseId)))
+            ->when($courseId, fn ($q) => $q->whereHas('assignment', fn ($inner) => $inner->where('course_id', $courseId)))
+            ->when($status === 'graded', fn ($q) => $q->whereNotNull('score'))
+            ->when($status === 'pending', fn ($q) => $q->whereNull('score'))
             ->latest('created_at')
             ->paginate($perPage);
     }

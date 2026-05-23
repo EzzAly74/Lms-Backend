@@ -15,7 +15,12 @@ class AdminRepository extends BaseRepository implements AdminRepositoryInterface
 
     public function findWithRoles(int $id): Admin
     {
-        return $this->model->newQuery()->with('roles')->findOrFail($id);
+        // Eager-load `roles.permissions` so the AdminResource can expose
+        // the admin's effective `view-*` permissions without falling into
+        // an N+1 every request.
+        return $this->model->newQuery()
+            ->with(['roles', 'roles.permissions'])
+            ->findOrFail($id);
     }
 
     public function paginateWithSearch(int $perPage, ?string $search): LengthAwarePaginator

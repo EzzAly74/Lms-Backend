@@ -25,23 +25,32 @@ class CourseAssignmentService
         return $this->repo->listForCourse($course);
     }
 
-    public function create(Course $course, string $title, UploadedFile $file): CourseAssignment
+    public function create(Course $course, string $title, UploadedFile $file, ?string $dueDate = null): CourseAssignment
     {
         $path = $this->uploadRequestFile('CourseAssignment', request(), null, $file);
 
         /** @var CourseAssignment */
-        return $this->repo->createForCourse($course, ['title' => $title, 'file' => $path]);
+        return $this->repo->createForCourse($course, array_filter([
+            'title'    => $title,
+            'file'     => $path,
+            'due_date' => $dueDate,
+        ], fn ($v) => $v !== null));
     }
 
-    public function update(CourseAssignment $assignment, string $title, ?UploadedFile $file): CourseAssignment
+    public function update(CourseAssignment $assignment, string $title, ?UploadedFile $file, ?string $dueDate = null): CourseAssignment
     {
-        $data = ['title' => $title];
+        $data = ['title' => $title, 'due_date' => $dueDate];
         if ($file) {
             $data['file'] = $this->uploadRequestFile('CourseAssignment', request(), null, $file);
         }
 
         /** @var CourseAssignment */
         return $this->repo->update($assignment, $data);
+    }
+
+    public function paginateAll(?int $courseId, ?string $search, int $perPage = 20): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        return $this->repo->paginateAll($courseId, $search, $perPage);
     }
 
     public function delete(CourseAssignment $assignment): void
@@ -77,9 +86,9 @@ class CourseAssignmentService
         return $this->repo->findSubmissionWithRelations($id);
     }
 
-    public function paginateAllSubmissions(?int $userId, ?int $courseId, int $perPage = 20): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    public function paginateAllSubmissions(?int $userId, ?int $courseId, ?string $status = null, int $perPage = 20): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
-        return $this->repo->paginateAllSubmissions($userId, $courseId, $perPage);
+        return $this->repo->paginateAllSubmissions($userId, $courseId, $status, $perPage);
     }
 
     public function deleteSubmissionById(int $id): void
