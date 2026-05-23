@@ -8,6 +8,7 @@ use App\Models\CourseAssignmentQuestion;
 use App\Models\User;
 use App\Models\UserCourseAssignment;
 use App\Models\UserCourseAssignmentAnswer;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
@@ -102,7 +103,7 @@ class AdminAssignmentService
             ->findOrFail($id);
     }
 
-    public function create(array $data, ?User $creator): CourseAssignment
+    public function create(array $data, ?Authenticatable $creator): CourseAssignment
     {
         return DB::transaction(function () use ($data, $creator) {
             $assignment = CourseAssignment::query()->create([

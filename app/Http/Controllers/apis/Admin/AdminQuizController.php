@@ -94,7 +94,7 @@ class AdminQuizController extends ApiController
 
     public function store(AdminQuizStoreRequest $request): JsonResponse
     {
-        /** @var User|null $user */
+        /** @var \Illuminate\Contracts\Auth\Authenticatable|null $user */
         $user = $request->user();
         $quiz = $this->service->create($request->validated(), $user);
 

@@ -8,6 +8,7 @@ use App\Models\CourseExamQuestion;
 use App\Models\User;
 use App\Models\UserExam;
 use App\Models\UserExamAnswer;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
@@ -106,7 +107,7 @@ class AdminQuizService
             ->findOrFail($id);
     }
 
-    public function create(array $data, ?User $creator): CourseExam
+    public function create(array $data, ?Authenticatable $creator): CourseExam
     {
         return DB::transaction(function () use ($data, $creator) {
             /** @var CourseExam $quiz */

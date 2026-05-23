@@ -95,7 +95,7 @@ class AdminAssignmentController extends ApiController
 
     public function store(AdminAssignmentStoreRequest $request): JsonResponse
     {
-        /** @var User|null $user */
+        /** @var \Illuminate\Contracts\Auth\Authenticatable|null $user */
         $user = $request->user();
 
         $assignment = $this->service->create($request->validated(), $user);
