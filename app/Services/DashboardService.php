@@ -11,10 +11,14 @@ class DashboardService
         private readonly DashboardRepositoryInterface $repo
     ) {}
 
-    public function getSummary(): array
+    /**
+     * @param  'week'|'month'|'quarter'|'year'|null  $range
+     */
+    public function getSummary(?string $range = null): array
     {
         $statistics      = $this->repo->getStatistics();
-        $enrollmentTrend = $this->repo->getEnrollmentTrend(30);
+        $resolvedRange   = $this->resolveRange($range);
+        $enrollmentTrend = $this->repo->getEnrollmentTrendByRange($resolvedRange);
         $locale     = app()->getLocale();
         $topCourses = $this->repo->getTopCourses(10)
             ->map(function ($c) use ($locale) {
@@ -39,7 +43,16 @@ class DashboardService
             'statistics'       => $statistics,
             'top_courses'      => $topCourses,
             'enrollment_trend' => $enrollmentTrend,
+            'trend_range'      => $resolvedRange,
             'notifications'    => $this->repo->getRecentNotifications(8),
         ];
+    }
+
+    private function resolveRange(?string $range): string
+    {
+        return match ($range) {
+            'week', 'quarter', 'year' => $range,
+            default                   => 'month',
+        };
     }
 }

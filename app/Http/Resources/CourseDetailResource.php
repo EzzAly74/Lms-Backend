@@ -2,9 +2,11 @@
 
 namespace App\Http\Resources;
 
+use App\Models\CourseRating;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\DB;
 
 class CourseDetailResource extends JsonResource
 {
@@ -25,6 +27,12 @@ class CourseDetailResource extends JsonResource
         $passPercent = (int) (Setting::query()
             ->where('key', 'min_passing_score')
             ->value('value') ?? 0);
+
+        $ratingCount       = (int) ($this->rating_count ?? 0);
+        $ratingAverage     = $ratingCount > 0
+            ? round((float) ($this->rating_avg ?? 0), 1)
+            : 0.0;
+        $commentsCount     = (int) ($this->comments_count ?? 0);
 
         return [
             'id'                 => $this->id,
@@ -73,12 +81,14 @@ class CourseDetailResource extends JsonResource
             'outside_materials'  => (bool) $this->outside_materials,
             'allow_attendances'  => (bool) $this->allow_attendances,
             'created_at'         => $this->created_at?->format('Y-m-d'),
+            'updated_at'         => $this->updated_at?->format('Y-m-d'),
             'course_type'        => $this->course_type,
             'type'               => $this->course_type,
             'status'             => $this->active ? 'active' : 'inactive',
             'active'             => (bool) $this->active,
             'users_count'        => $this->users_count ?? null,
             'enrolled_count'     => $this->users_count ?? 0,
+            'cohorts_count'      => (int) ($this->cohorts_count ?? $this->sessions_count ?? 0),
             'instructor'         => $this->whenLoaded('instructors', function () {
                 $first = $this->instructors->first();
                 return $first ? [
@@ -92,6 +102,102 @@ class CourseDetailResource extends JsonResource
                     'name' => $s->getTranslation('name', app()->getLocale()),
                 ]),
             ),
+
+            // Learner-engagement metrics. These power the four KPI cards and
+            // the Ratings tab on the course detail screen.
+            'rating'              => $ratingAverage,
+            'rating_count'        => $ratingCount,
+            'comments_count'      => $commentsCount,
+            'rating_distribution' => $this->resolveRatingDistribution(),
+            'completion_percent'  => $this->resolveCompletionPercent(),
+            'reviews'             => $this->resolveReviews(),
         ];
+    }
+
+    /**
+     * Five-bucket distribution counts ordered from 5★ down to 1★.
+     * One aggregated query so the detail page stays cheap even with
+     * thousands of ratings.
+     *
+     * @return array<int, int>
+     */
+    private function resolveRatingDistribution(): array
+    {
+        $row = CourseRating::query()
+            ->where('course_id', $this->id)
+            ->selectRaw(
+                'SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END) AS s5,'
+                .'SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END) AS s4,'
+                .'SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) AS s3,'
+                .'SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) AS s2,'
+                .'SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) AS s1'
+            )
+            ->first();
+
+        return $row
+            ? [(int) $row->s5, (int) $row->s4, (int) $row->s3, (int) $row->s2, (int) $row->s1]
+            : [0, 0, 0, 0, 0];
+    }
+
+    /**
+     * Latest 20 reviews used by the Ratings tab. We rely on the eager-loaded
+     * `ratings` relation (already limited to 20 in the repository) so this
+     * doesn't trigger an extra query.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function resolveReviews(): array
+    {
+        if (! $this->relationLoaded('ratings')) {
+            return [];
+        }
+
+        return $this->ratings->map(fn ($r) => [
+            'id'                => $r->id,
+            'rating'            => (int) $r->rating,
+            'comment'           => $r->comment,
+            'user_name'         => $r->user?->name ?? 'Unknown',
+            'user_machine_code' => $r->user?->machine_code ?? null,
+            'created_at'        => $r->created_at?->toIso8601String(),
+        ])->values()->all();
+    }
+
+    /**
+     * Course-wide completion percent — average across every enrolled user's
+     * progress through the course lectures. One aggregate query.
+     */
+    private function resolveCompletionPercent(): int
+    {
+        $totalLectures = (int) DB::table('course_lectures')
+            ->where('course_id', $this->id)
+            ->count();
+
+        if ($totalLectures === 0) {
+            return 0;
+        }
+
+        $totalUsers = (int) DB::table('users_courses')
+            ->where('course_id', $this->id)
+            ->count();
+
+        if ($totalUsers === 0) {
+            return 0;
+        }
+
+        $completed = (int) DB::table('user_lecture_progress')
+            ->join('course_lectures', 'course_lectures.id', '=', 'user_lecture_progress.lecture_id')
+            ->join('users_courses', function ($join) {
+                $join->on('users_courses.user_id', '=', 'user_lecture_progress.user_id')
+                     ->whereColumn('users_courses.course_id', 'course_lectures.course_id');
+            })
+            ->where('course_lectures.course_id', $this->id)
+            ->where('user_lecture_progress.completed', true)
+            ->count();
+
+        $denominator = $totalLectures * $totalUsers;
+
+        return $denominator > 0
+            ? (int) floor(($completed * 100) / $denominator)
+            : 0;
     }
 }

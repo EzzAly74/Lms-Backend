@@ -63,6 +63,8 @@ use App\Repositories\Eloquents\UserEnrollmentRepository;
 use App\Repositories\Eloquents\UserProgressRepository;
 use App\Repositories\Eloquents\UserRepository;
 use App\Models\Category;
+use App\Models\User;
+use App\Observers\UserObserver;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -140,6 +142,11 @@ class AppServiceProvider extends ServiceProvider
             Registered::class,
             SendEmailVerificationNotification::class,
         );
+
+        // Keep the Job Titles catalogue in lock-step with the HR roster
+        // (users.department_name is the source of truth — see
+        // App\Services\JobTitleSyncService for the full rationale).
+        User::observe(UserObserver::class);
 
         $this->shareGlobalFrontData();
     }

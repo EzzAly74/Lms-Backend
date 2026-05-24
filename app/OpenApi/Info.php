@@ -47,6 +47,7 @@ use OpenApi\Annotations as OA;
  * @OA\Tag(name="Online Enrollment",     description="Enrolling employees in online courses")
  * @OA\Tag(name="User Enrollment",       description="Enrolling employees in offline courses")
  * @OA\Tag(name="Attendance",            description="Attendance recording & reporting")
+ * @OA\Tag(name="Cohort Attendance",     description="Per-cohort attendance rollup (sessions + learners + per-session absentees) for the course detail drawer")
  * @OA\Tag(name="Certificates",          description="Issued course completion certificates")
  * @OA\Tag(name="Evaluation Categories", description="Categories used by the general evaluation system")
  * @OA\Tag(name="Evaluations",           description="General evaluation definitions")

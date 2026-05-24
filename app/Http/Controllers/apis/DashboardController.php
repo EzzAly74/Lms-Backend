@@ -4,6 +4,7 @@ namespace App\Http\Controllers\apis;
 
 use App\Services\DashboardService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use OpenApi\Annotations as OA;
 
 class DashboardController extends ApiController
@@ -36,8 +37,11 @@ class DashboardController extends ApiController
      *     @OA\Response(response=403, ref="#/components/responses/Forbidden")
      * )
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        return $this->success(__('messages.retrieved'), $this->service->getSummary());
+        $range = $request->query('range');
+        $range = is_string($range) ? $range : null;
+
+        return $this->success(__('messages.retrieved'), $this->service->getSummary($range));
     }
 }

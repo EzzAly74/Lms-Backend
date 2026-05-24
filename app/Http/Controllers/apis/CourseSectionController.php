@@ -66,7 +66,11 @@ class CourseSectionController extends ApiController
      *         required=true,
      *         @OA\JsonContent(
      *             required={"name"},
-     *             @OA\Property(property="name", ref="#/components/schemas/TranslatedString")
+     *             @OA\Property(property="name",       ref="#/components/schemas/TranslatedString"),
+     *             @OA\Property(property="start_date", type="string",  format="date", nullable=true),
+     *             @OA\Property(property="end_date",   type="string",  format="date", nullable=true),
+     *             @OA\Property(property="capacity",   type="integer", minimum=1, maximum=10000, nullable=true),
+     *             @OA\Property(property="status",    type="string",  enum={"scheduled","active","completed","inactive"}, nullable=true)
      *         )
      *     ),
      *     @OA\Response(
@@ -87,12 +91,7 @@ class CourseSectionController extends ApiController
      */
     public function store(Course $course, Request $request): JsonResponse
     {
-        $data = $request->validate([
-            'name'    => 'required|array',
-            'name.ar' => 'required|string|max:255',
-            'name.en' => 'nullable|string|max:255',
-        ]);
-        $section = $this->service->create($course, $data);
+        $section = $this->service->create($course, $this->cohortRules($request));
         return $this->created(__('messages.created'), new CourseSectionResource($section));
     }
 
@@ -169,7 +168,11 @@ class CourseSectionController extends ApiController
      *         required=true,
      *         @OA\JsonContent(
      *             required={"name"},
-     *             @OA\Property(property="name", ref="#/components/schemas/TranslatedString")
+     *             @OA\Property(property="name",       ref="#/components/schemas/TranslatedString"),
+     *             @OA\Property(property="start_date", type="string",  format="date", nullable=true),
+     *             @OA\Property(property="end_date",   type="string",  format="date", nullable=true),
+     *             @OA\Property(property="capacity",   type="integer", minimum=1, maximum=10000, nullable=true),
+     *             @OA\Property(property="status",    type="string",  enum={"scheduled","active","completed","inactive"}, nullable=true)
      *         )
      *     ),
      *     @OA\Response(
@@ -191,13 +194,31 @@ class CourseSectionController extends ApiController
     public function update(Course $course, CourseSection $section, Request $request): JsonResponse
     {
         abort_if($section->course_id !== $course->id, 404);
-        $data = $request->validate([
-            'name'    => 'required|array',
-            'name.ar' => 'required|string|max:255',
-            'name.en' => 'nullable|string|max:255',
-        ]);
-        $updated = $this->service->update($section, $data);
+        $updated = $this->service->update($section, $this->cohortRules($request));
         return $this->success(__('messages.updated'), new CourseSectionResource($updated));
+    }
+
+    /**
+     * Validate the shared store/update payload for a cohort (= course
+     * section). Centralised so the rules don't drift between endpoints.
+     *
+     * The legacy clients only sent `name`; the new Figma cohort dialog
+     * adds start/end dates, capacity and a status enum. Every new field
+     * is `nullable` so older callers don't 422.
+     */
+    private function cohortRules(Request $request): array
+    {
+        return $request->validate([
+            'name'        => 'required|array',
+            'name.ar'     => 'required|string|max:255',
+            'name.en'     => 'nullable|string|max:255',
+            'start_date'  => 'nullable|date',
+            // end_date may equal start_date for a one-shot cohort, hence
+            // `after_or_equal` rather than `after`.
+            'end_date'    => 'nullable|date|after_or_equal:start_date',
+            'capacity'    => 'nullable|integer|min:1|max:10000',
+            'status'      => 'nullable|string|in:scheduled,active,completed,inactive',
+        ]);
     }
 
     /**

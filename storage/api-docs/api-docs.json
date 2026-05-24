@@ -2484,6 +2484,78 @@
                 ]
             }
         },
+        "/courses/{course}/cohorts/{cohort}/attendance": {
+            "get": {
+                "tags": [
+                    "Cohort Attendance"
+                ],
+                "summary": "Admin: full attendance rollup for one cohort (sessions + learners + per-session absentees).",
+                "operationId": "854d8d15fb668d5bb6b4957f9b701ad1",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    },
+                    {
+                        "name": "course",
+                        "in": "path",
+                        "description": "Course identifier",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "cohort",
+                        "in": "path",
+                        "description": "Cohort (course_sections.id) identifier",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cohort attendance rollup",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "result": {
+                                                    "$ref": "#/components/schemas/CohortAttendance"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
         "/courses/{course}/assignments": {
             "get": {
                 "tags": [
@@ -2553,7 +2625,7 @@
                     "Course Assignments"
                 ],
                 "summary": "Create an assignment for a course (admin only). Uses multipart/form-data.",
-                "operationId": "3025232119ced322227b523120b35f6e",
+                "operationId": "22a1194d14f92effdb3279e595e5ab8f",
                 "parameters": [
                     {
                         "name": "course",
@@ -3362,6 +3434,64 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/courses/tab-counts": {
+            "get": {
+                "tags": [
+                    "Courses"
+                ],
+                "summary": "Return total course counts grouped by admin tab. Computed in a single aggregate query.",
+                "operationId": "cfc997d9008c2b649d15fe625a7d5155",
+                "responses": {
+                    "200": {
+                        "description": "Tab counts",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "result": {
+                                                    "properties": {
+                                                        "all": {
+                                                            "type": "integer"
+                                                        },
+                                                        "active": {
+                                                            "type": "integer"
+                                                        },
+                                                        "inactive": {
+                                                            "type": "integer"
+                                                        },
+                                                        "pending": {
+                                                            "type": "integer"
+                                                        },
+                                                        "upcoming": {
+                                                            "type": "integer"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
                     }
                 },
                 "security": [
@@ -4227,6 +4357,68 @@
                 ]
             }
         },
+        "/courses/{course}/modules": {
+            "get": {
+                "tags": [
+                    "Course Lectures"
+                ],
+                "summary": "Flat list of modules (lectures) for the admin Content tab.",
+                "operationId": "daea2d300999858a32bc4235f45eb50f",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    },
+                    {
+                        "name": "course",
+                        "in": "path",
+                        "description": "Course id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Flat list of modules",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "result": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/CourseLecture"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
         "/courses/{course}/lectures/{lecture}": {
             "put": {
                 "tags": [
@@ -4379,6 +4571,97 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/NotFound"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/courses/{course}/lectures/upload": {
+            "post": {
+                "tags": [
+                    "Course Lectures"
+                ],
+                "summary": "Upload a document file for a module (returns storage path + metadata).",
+                "operationId": "c789560bcc8b98ed124835636749d0b7",
+                "parameters": [
+                    {
+                        "name": "course",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "file"
+                                ],
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Uploaded",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "result": {
+                                                    "properties": {
+                                                        "path": {
+                                                            "type": "string"
+                                                        },
+                                                        "url": {
+                                                            "type": "string"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "size": {
+                                                            "type": "integer"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
                     }
                 },
                 "security": [
@@ -5007,6 +5290,32 @@
                                 "properties": {
                                     "name": {
                                         "$ref": "#/components/schemas/TranslatedString"
+                                    },
+                                    "start_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "nullable": true
+                                    },
+                                    "end_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "nullable": true
+                                    },
+                                    "capacity": {
+                                        "type": "integer",
+                                        "nullable": true,
+                                        "maximum": 10000,
+                                        "minimum": 1
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "enum": [
+                                            "scheduled",
+                                            "active",
+                                            "completed",
+                                            "inactive"
+                                        ]
                                     }
                                 },
                                 "type": "object"
@@ -5196,6 +5505,32 @@
                                 "properties": {
                                     "name": {
                                         "$ref": "#/components/schemas/TranslatedString"
+                                    },
+                                    "start_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "nullable": true
+                                    },
+                                    "end_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "nullable": true
+                                    },
+                                    "capacity": {
+                                        "type": "integer",
+                                        "nullable": true,
+                                        "maximum": 10000,
+                                        "minimum": 1
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "enum": [
+                                            "scheduled",
+                                            "active",
+                                            "completed",
+                                            "inactive"
+                                        ]
                                     }
                                 },
                                 "type": "object"
@@ -8572,6 +8907,64 @@
                 ]
             }
         },
+        "/permissions": {
+            "get": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "List every permission available in the system, grouped by table.",
+                "operationId": "976a39096ede4639dd0cdbc8e90f012c",
+                "responses": {
+                    "200": {
+                        "description": "All permissions grouped by their table",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "result": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "table": {
+                                                                "type": "string"
+                                                            },
+                                                            "permissions": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                }
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
         "/roles/{role}": {
             "get": {
                 "tags": [
@@ -8943,6 +9336,89 @@
                 ]
             }
         },
+        "/admin/settings/upload": {
+            "post": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Upload a single image/file and write its storage path back to the matching setting (admin only).",
+                "operationId": "48938441d1d6375b494a7741738ba2fc",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "key",
+                                    "file"
+                                ],
+                                "properties": {
+                                    "key": {
+                                        "description": "Setting key — e.g. header_logo, banner_background, footer_logo, about_image.",
+                                        "type": "string"
+                                    },
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Uploaded — returns the new public URL and the relative storage path.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "result": {
+                                                    "properties": {
+                                                        "key": {
+                                                            "type": "string"
+                                                        },
+                                                        "path": {
+                                                            "type": "string"
+                                                        },
+                                                        "url": {
+                                                            "type": "string",
+                                                            "format": "uri"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
         "/users": {
             "get": {
                 "tags": [
@@ -8962,6 +9438,33 @@
                     },
                     {
                         "$ref": "#/components/parameters/Search"
+                    },
+                    {
+                        "name": "role",
+                        "in": "query",
+                        "description": "Filter by user role tab.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "learner",
+                                "instructor"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "learner_type",
+                        "in": "query",
+                        "description": "Filter learners by delivery preference.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "online",
+                                "offline",
+                                "hybrid"
+                            ]
+                        }
                     }
                 ],
                 "responses": {
@@ -10799,6 +11302,174 @@
                 },
                 "type": "object"
             },
+            "CohortAttendance": {
+                "properties": {
+                    "cohort": {
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "start_date": {
+                                "type": "string",
+                                "format": "date",
+                                "nullable": true
+                            },
+                            "end_date": {
+                                "type": "string",
+                                "format": "date",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "course": {
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "title": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "totals": {
+                        "properties": {
+                            "sessions": {
+                                "type": "integer"
+                            },
+                            "learners": {
+                                "type": "integer"
+                            },
+                            "attended": {
+                                "type": "integer"
+                            },
+                            "absent": {
+                                "type": "integer"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "sessions": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "index": {
+                                    "description": "1-based position in the chronological list.",
+                                    "type": "integer"
+                                },
+                                "title": {
+                                    "type": "string"
+                                },
+                                "date": {
+                                    "type": "string",
+                                    "format": "date",
+                                    "nullable": true
+                                },
+                                "time_from": {
+                                    "type": "string",
+                                    "nullable": true
+                                },
+                                "time_to": {
+                                    "type": "string",
+                                    "nullable": true
+                                },
+                                "location": {
+                                    "type": "string",
+                                    "nullable": true
+                                },
+                                "attended_count": {
+                                    "type": "integer"
+                                },
+                                "absent_count": {
+                                    "type": "integer"
+                                },
+                                "total": {
+                                    "type": "integer"
+                                },
+                                "full_attendance": {
+                                    "type": "boolean"
+                                },
+                                "absent_learners": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "learners": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "machine_code": {
+                                    "type": "string",
+                                    "nullable": true
+                                },
+                                "department": {
+                                    "type": "string",
+                                    "nullable": true
+                                },
+                                "total_sessions": {
+                                    "type": "integer"
+                                },
+                                "attended_count": {
+                                    "type": "integer"
+                                },
+                                "absent_count": {
+                                    "type": "integer"
+                                },
+                                "absent_sessions": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "index": {
+                                                "type": "integer"
+                                            },
+                                            "title": {
+                                                "type": "string"
+                                            },
+                                            "date": {
+                                                "type": "string",
+                                                "format": "date",
+                                                "nullable": true
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
             "Course": {
                 "properties": {
                     "id": {
@@ -11132,6 +11803,7 @@
                 "type": "object"
             },
             "CourseSection": {
+                "description": "A course section / cohort. The Cohort tab on the course detail screen treats one section row as one cohort.",
                 "properties": {
                     "id": {
                         "type": "integer"
@@ -11140,8 +11812,50 @@
                         "type": "integer"
                     },
                     "name": {
-                        "description": "Localized name.",
+                        "description": "Localized display name.",
                         "type": "string"
+                    },
+                    "name_translations": {
+                        "description": "Raw EN/AR pair so the edit dialog can pre-fill both inputs.",
+                        "properties": {
+                            "en": {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            "ar": {
+                                "type": "string",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "capacity": {
+                        "description": "Max learners allowed in this cohort.",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "scheduled",
+                            "active",
+                            "completed",
+                            "inactive"
+                        ]
+                    },
+                    "enrolled_count": {
+                        "description": "Live count of users enrolled into this cohort (users_courses.group_id).",
+                        "type": "integer"
                     },
                     "order": {
                         "type": "integer",
@@ -11919,6 +12633,10 @@
         {
             "name": "Attendance",
             "description": "Attendance recording & reporting"
+        },
+        {
+            "name": "Cohort Attendance",
+            "description": "Per-cohort attendance rollup (sessions + learners + per-session absentees) for the course detail drawer"
         },
         {
             "name": "Certificates",

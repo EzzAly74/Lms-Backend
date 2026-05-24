@@ -18,6 +18,12 @@ class UserAuthService
         $result    = $hrService->getAccessToken($email, $password, true);
 
         if (!$result || !isset($result->employee)) {
+            if ($hrService->lastError === 'unreachable') {
+                abort(response()->json([
+                    'status'  => 'error',
+                    'message' => 'HR service is currently unreachable. Please try again later.',
+                ], 503));
+            }
             return null;
         }
 

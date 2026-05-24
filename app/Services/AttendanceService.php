@@ -25,8 +25,16 @@ class AttendanceService
     /**
      * Record one attendance session for a user on a course.
      * Mirrors the legacy saveAttendance() helper exactly.
+     *
+     * @param int|null $sessionId  Optional course_sessions.id this attendance
+     *                             is for. When provided we pin the row to that
+     *                             exact session so the Cohort Attendance drawer
+     *                             can group per-session unambiguously even when
+     *                             two sessions land on the same calendar day.
+     *                             Backward-compatible: existing callers that
+     *                             don't pass it keep the old date-match behaviour.
      */
-    public function record(User $user, Course $course): array
+    public function record(User $user, Course $course, ?int $sessionId = null): array
     {
         $course->loadMissing('category');
 
@@ -58,6 +66,7 @@ class AttendanceService
             'course_name'          => $course->title,
             'course_hours'         => $course->hours,
             'section_id'           => $userGroupId,
+            'session_id'           => $sessionId,
             'attendance_hours'     => $attendanceHours,
             'is_manual'            => true,
             'created_at'           => now(),

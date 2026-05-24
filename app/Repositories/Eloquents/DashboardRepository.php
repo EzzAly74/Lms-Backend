@@ -96,6 +96,120 @@ class DashboardRepository implements DashboardRepositoryInterface
         ], $rows);
     }
 
+    /**
+     * Range-aware enrollment trend (2026 dashboard).
+     *
+     *   - week     → 7 daily buckets
+     *   - month    → 30 daily buckets
+     *   - quarter  → 13 weekly buckets (last 90 days, ISO-week grouped)
+     *   - year     → 12 monthly buckets
+     *
+     * Always returns the full bucket grid (zero-filled), so the chart
+     * never has gaps even when no enrollment activity occurred in a
+     * given window.
+     *
+     * @param  'week'|'month'|'quarter'|'year'  $range
+     * @return array<int, array{date:string,label:string,enrollments:int,completions:int}>
+     */
+    public function getEnrollmentTrendByRange(string $range): array
+    {
+        return match ($range) {
+            'week'    => $this->buildDailyTrend(7),
+            'quarter' => $this->buildWeeklyTrend(13),
+            'year'    => $this->buildMonthlyTrend(12),
+            default   => $this->buildDailyTrend(30),
+        };
+    }
+
+    /**
+     * @return array<int, array{date:string,label:string,enrollments:int,completions:int}>
+     */
+    private function buildDailyTrend(int $days): array
+    {
+        $rows = $this->getEnrollmentTrend($days);
+
+        return array_map(static function (array $r): array {
+            $d = \Illuminate\Support\Carbon::parse($r['date']);
+            return [
+                'date'        => $d->format('Y-m-d'),
+                'label'       => $d->format('d M'),
+                'enrollments' => (int) $r['enrollments'],
+                'completions' => (int) $r['completions'],
+            ];
+        }, $rows);
+    }
+
+    /**
+     * @return array<int, array{date:string,label:string,enrollments:int,completions:int}>
+     */
+    private function buildWeeklyTrend(int $weeks): array
+    {
+        $days = $weeks * 7;
+        $start = \Illuminate\Support\Carbon::today()->subDays($days - 1)->startOfDay();
+
+        $enrollments = DB::table('users_courses')
+            ->selectRaw('YEARWEEK(created_at, 3) AS yw, COUNT(*) AS total')
+            ->where('created_at', '>=', $start)
+            ->groupBy('yw')
+            ->pluck('total', 'yw');
+
+        $completions = DB::table('users_courses')
+            ->selectRaw('YEARWEEK(updated_at, 3) AS yw, COUNT(*) AS total')
+            ->where('updated_at', '>=', $start)
+            ->whereColumn('updated_at', '>', 'created_at')
+            ->groupBy('yw')
+            ->pluck('total', 'yw');
+
+        $buckets = [];
+        for ($i = $weeks - 1; $i >= 0; $i--) {
+            $weekStart = \Illuminate\Support\Carbon::today()->subWeeks($i)->startOfWeek();
+            $key = (int) $weekStart->format('oW');
+            $buckets[] = [
+                'date'        => $weekStart->format('Y-m-d'),
+                'label'       => 'W' . $weekStart->isoWeek(),
+                'enrollments' => (int) ($enrollments[$key] ?? 0),
+                'completions' => (int) ($completions[$key] ?? 0),
+            ];
+        }
+
+        return $buckets;
+    }
+
+    /**
+     * @return array<int, array{date:string,label:string,enrollments:int,completions:int}>
+     */
+    private function buildMonthlyTrend(int $months): array
+    {
+        $start = \Illuminate\Support\Carbon::today()->subMonthsNoOverflow($months - 1)->startOfMonth();
+
+        $enrollments = DB::table('users_courses')
+            ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') AS ym, COUNT(*) AS total")
+            ->where('created_at', '>=', $start)
+            ->groupBy('ym')
+            ->pluck('total', 'ym');
+
+        $completions = DB::table('users_courses')
+            ->selectRaw("DATE_FORMAT(updated_at, '%Y-%m') AS ym, COUNT(*) AS total")
+            ->where('updated_at', '>=', $start)
+            ->whereColumn('updated_at', '>', 'created_at')
+            ->groupBy('ym')
+            ->pluck('total', 'ym');
+
+        $buckets = [];
+        for ($i = $months - 1; $i >= 0; $i--) {
+            $d   = \Illuminate\Support\Carbon::today()->subMonthsNoOverflow($i)->startOfMonth();
+            $key = $d->format('Y-m');
+            $buckets[] = [
+                'date'        => $d->format('Y-m-d'),
+                'label'       => $d->format('M'),
+                'enrollments' => (int) ($enrollments[$key] ?? 0),
+                'completions' => (int) ($completions[$key] ?? 0),
+            ];
+        }
+
+        return $buckets;
+    }
+
     public function getRecentNotifications(int $limit): array
     {
         $stats = $this->getStatistics();

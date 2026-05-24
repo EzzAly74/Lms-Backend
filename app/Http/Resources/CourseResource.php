@@ -49,6 +49,13 @@ class CourseResource extends JsonResource
             'status'             => $this->active ? 'active' : 'inactive',
             'users_count'        => $this->users_count ?? null,
             'cohorts_count'      => $this->sessions_count ?? null,
+            // Aggregated by the list query (withAvg/withCount). We round to
+            // one decimal so the table cell can format with `number:'1.1-1'`
+            // without re-doing the math client-side.
+            'rating'             => $this->rating_avg !== null
+                ? round((float) $this->rating_avg, 1)
+                : 0,
+            'rating_count'       => (int) ($this->rating_count ?? 0),
             'instructor'         => $this->whenLoaded('instructors', function () {
                 $first = $this->instructors->first();
                 return $first ? [

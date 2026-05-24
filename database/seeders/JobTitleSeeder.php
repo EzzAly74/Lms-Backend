@@ -2,39 +2,57 @@
 
 namespace Database\Seeders;
 
+use App\Services\JobTitleSyncService;
+use Illuminate\Container\Container;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
+/**
+ * Projects the Job Titles catalogue from the canonical HR roster
+ * (the `users` table imported by {@see UserSeeder}).
+ *
+ * Historically this seeder shipped a hardcoded list of test titles
+ * ("Site Engineer", "Project Manager", …) that had **zero overlap**
+ * with the real `users.department_name` values from the production
+ * dump — so every card on the Job Titles screen rendered
+ * "0 Employee". We replaced that with a thin delegation to
+ * {@see JobTitleSyncService::syncFromUsers()}, which derives the
+ * catalogue from HR truth and is also reused by the
+ * `php artisan job-titles:sync` command for ongoing reconciliation.
+ *
+ * DatabaseSeeder runs JobTitleSeeder **after** UserSeeder, so the
+ * source rows are already in place when this fires. On a fresh
+ * database without a users fixture the sync simply yields zero rows
+ * and exits — no errors, no test data left behind.
+ */
 class JobTitleSeeder extends Seeder
 {
     public function run(): void
     {
-        $titles = [
-            'Site Engineer',
-            'Project Manager',
-            'Safety Officer',
-            'Quality Inspector',
-            'Civil Engineer',
-            'Mechanical Engineer',
-            'Electrical Engineer',
-            'Architect',
-            'Site Supervisor',
-            'Document Controller',
-            'Procurement Officer',
-            'HR Specialist',
-            'Finance Officer',
-            'IT Support',
-            'Operations Manager',
-        ];
+        if (! Schema::hasTable('users') || ! Schema::hasTable('job_titles')) {
+            $this->command?->warn('JobTitleSeeder: required tables missing; skipping.');
 
-        $now = now();
+            return;
+        }
 
-        $rows = array_map(static fn (string $title) => [
-            'name'       => $title,
-            'created_at' => $now,
-            'updated_at' => $now,
-        ], $titles);
+        /**
+         * Seeders run in CI and on fresh local DBs that have no
+         * outbound network. Use the offline path here — the
+         * `job-titles:sync` (HR) and `sync:employees` commands
+         * handle the live-HR refresh in their own contexts.
+         */
+        /** @var JobTitleSyncService $sync */
+        $sync = Container::getInstance()->make(JobTitleSyncService::class);
 
-        DB::table('job_titles')->upsert($rows, ['name'], ['updated_at']);
+        $report = $sync->syncFromUsers();
+
+        $this->command?->info(sprintf(
+            'JobTitleSeeder: synced %d catalogue rows (created: %d, unchanged: %d, orphaned: %d) from %d local users.',
+            $report['created'] + $report['unchanged'],
+            $report['created'],
+            $report['unchanged'],
+            $report['orphaned'],
+            $report['source_rows'],
+        ));
     }
 }
