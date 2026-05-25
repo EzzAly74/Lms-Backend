@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Course;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -10,6 +11,20 @@ class CourseSectionResource extends JsonResource
     public function toArray(Request $request): array
     {
         $locale = app()->getLocale();
+
+        // Roll the stored status forward to whatever the calendar
+        // dictates now ("scheduled" rolls into "active" once start_date
+        // arrives, "active" rolls into "completed" once end_date
+        // passes). Manual `inactive` always wins so admins can still
+        // park a cohort offline. The persisted column is left untouched
+        // here — `php artisan cohorts:sync-statuses` is the source of
+        // truth for the stored value, this resource just keeps reads
+        // live in between cron runs.
+        $effectiveStatus = Course::deriveCohortStatus(
+            $this->status,
+            $this->start_date,
+            $this->end_date,
+        );
 
         return [
             'id'             => $this->id,
@@ -26,7 +41,8 @@ class CourseSectionResource extends JsonResource
             'start_date'     => $this->start_date?->format('Y-m-d'),
             'end_date'       => $this->end_date?->format('Y-m-d'),
             'capacity'       => $this->capacity !== null ? (int) $this->capacity : null,
-            'status'         => $this->status ?? 'scheduled',
+            'status'         => $effectiveStatus,
+            'stored_status'  => $this->status ?? 'scheduled',
             // Counted inline by the repository (`withCount`). Falls back
             // to a fresh sub-query if a caller hand-builds a section model.
             'enrolled_count' => (int) ($this->enrolled_count

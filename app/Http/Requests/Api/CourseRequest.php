@@ -98,6 +98,13 @@ class CourseRequest extends FormRequest
             'instructors.*'           => 'required|exists:instructors,id',
             'qualification_skill_ids' => 'nullable|array',
             'qualification_skill_ids.*' => 'integer|distinct|exists:qualification_skills,id',
+            // Optional cohort window: when present, the controller
+            // upserts the course's *first* cohort (course_sections row)
+            // so the calendar can drive status. Both can be sent
+            // independently — the service treats them as a window
+            // that defaults to "open-ended" on the missing side.
+            'cohort_start'            => 'nullable|date_format:Y-m-d',
+            'cohort_end'              => 'nullable|date_format:Y-m-d|after_or_equal:cohort_start',
         ];
     }
 }

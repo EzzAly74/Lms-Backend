@@ -45,7 +45,13 @@ class DashboardRepository implements DashboardRepositoryInterface
     {
         return Course::query()
             ->select('id', 'title', 'active')
-            ->with(['instructors:id,name'])
+            ->with([
+                'instructors:id,name',
+                // Sections power `Course::effectiveStatus()` — eager-load
+                // them with just the columns we need so the dashboard
+                // top-courses widget stays a single-shot query (no N+1).
+                'sections:id,course_id,start_date,end_date,status',
+            ])
             ->selectRaw('
                 (SELECT COUNT(*) FROM users_courses uc WHERE uc.course_id = courses.id)                                        AS users_count,
                 (SELECT COUNT(*) FROM users_courses uc WHERE uc.course_id = courses.id AND uc.updated_at > uc.created_at)      AS completed_count

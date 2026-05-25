@@ -4,9 +4,11 @@ namespace App\Services;
 
 use App\Http\Traits\HasFile;
 use App\Models\Course;
+use App\Models\CourseSection;
 use App\Repositories\Contracts\CourseRepositoryInterface;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 class CourseService
@@ -67,7 +69,15 @@ class CourseService
 
         $instructors           = $data['instructors']             ?? [];
         $qualificationSkillIds = $data['qualification_skill_ids'] ?? [];
-        unset($data['instructors'], $data['qualification_skill_ids']);
+        // Pop the cohort window off the payload so it doesn't trip the
+        // Course model's guarded write — it goes onto a CourseSection
+        // instead (see syncFirstCohort below).
+        $cohortStart = $data['cohort_start'] ?? null;
+        $cohortEnd   = $data['cohort_end']   ?? null;
+        unset(
+            $data['instructors'], $data['qualification_skill_ids'],
+            $data['cohort_start'], $data['cohort_end'],
+        );
 
         $course = $this->courseRepository->create($data);
 
@@ -77,6 +87,10 @@ class CourseService
 
         if ($qualificationSkillIds) {
             $course->qualificationSkills()->sync(array_values(array_unique($qualificationSkillIds)));
+        }
+
+        if ($cohortStart || $cohortEnd) {
+            $this->syncFirstCohort($course, $cohortStart, $cohortEnd);
         }
 
         return $this->courseRepository->findWithBasicRelations($course->id);
@@ -95,7 +109,14 @@ class CourseService
         $instructors           = $data['instructors']             ?? null;
         $hasSkillsPayload      = array_key_exists('qualification_skill_ids', $data);
         $qualificationSkillIds = $data['qualification_skill_ids'] ?? null;
-        unset($data['instructors'], $data['qualification_skill_ids']);
+        $hasCohortStart        = array_key_exists('cohort_start', $data);
+        $hasCohortEnd          = array_key_exists('cohort_end', $data);
+        $cohortStart           = $data['cohort_start'] ?? null;
+        $cohortEnd             = $data['cohort_end']   ?? null;
+        unset(
+            $data['instructors'], $data['qualification_skill_ids'],
+            $data['cohort_start'], $data['cohort_end'],
+        );
 
         $course = $this->courseRepository->update($course, $data);
 
@@ -109,7 +130,45 @@ class CourseService
             );
         }
 
+        if ($hasCohortStart || $hasCohortEnd) {
+            $this->syncFirstCohort($course, $cohortStart, $cohortEnd);
+        }
+
         return $this->courseRepository->findWithBasicRelations($course->id);
+    }
+
+    /**
+     * Upsert the course's *first* cohort from the inline cohort window
+     * captured on the Add / Edit Course dialogs. We treat the earliest
+     * (lowest id) `course_sections` row as the canonical first cohort —
+     * matching what `CourseDetailResource` surfaces for the form pre-fill.
+     *
+     * The cohort `status` is intentionally left to the calendar — once
+     * the row exists with a date window, `Course::deriveCohortStatus`
+     * + the daily `cohorts:sync-statuses` command keep it in sync.
+     */
+    private function syncFirstCohort(Course $course, ?string $start, ?string $end): void
+    {
+        $section = $course->sections()->orderBy('id')->first();
+
+        $payload = [
+            'start_date' => $start ? Carbon::parse($start)->toDateString() : null,
+            'end_date'   => $end   ? Carbon::parse($end)->toDateString()   : null,
+        ];
+
+        if ($section === null) {
+            // Seed the very first cohort with a sensible default name
+            // ("Cohort 1") so the table on the Course Detail page has
+            // something to render before the admin renames it.
+            CourseSection::create(array_merge($payload, [
+                'course_id' => $course->id,
+                'name'      => ['en' => 'Cohort 1', 'ar' => 'الدفعة 1'],
+                'status'    => 'scheduled',
+            ]));
+            return;
+        }
+
+        $section->fill($payload)->save();
     }
 
     public function delete(Course $course): bool

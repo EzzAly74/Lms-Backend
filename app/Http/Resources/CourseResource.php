@@ -9,6 +9,14 @@ class CourseResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        // Status follows the cohort calendar: a course is "active" the
+        // day its first cohort starts and rolls back to "inactive" the
+        // day after its last cohort ends. The persisted `active` column
+        // remains as a hard manual override for courses with no cohorts
+        // yet — see Course::effectiveStatus().
+        $effectiveStatus = $this->resource->effectiveStatus();
+        $effectiveActive = $effectiveStatus === 'active';
+
         return [
             'id'                 => $this->id,
             'title'              => $this->getTranslation('title', app()->getLocale()),
@@ -38,7 +46,8 @@ class CourseResource extends JsonResource
             'price'              => $this->price,
             'currency'           => $this->currency,
             'certificate'        => (bool) $this->certificate,
-            'active'             => (bool) $this->active,
+            'active'             => $effectiveActive,
+            'stored_active'      => (bool) $this->active,
             'for_public'         => (bool) $this->for_public,
             'is_evaluate'        => (bool) $this->is_evaluate,
             'outside_materials'  => (bool) $this->outside_materials,
@@ -46,7 +55,7 @@ class CourseResource extends JsonResource
             'created_at'         => $this->created_at?->format('Y-m-d'),
             'updated_at'         => $this->updated_at?->format('Y-m-d'),
             'type'               => $this->course_type,
-            'status'             => $this->active ? 'active' : 'inactive',
+            'status'             => $effectiveStatus,
             'users_count'        => $this->users_count ?? null,
             'cohorts_count'      => $this->sessions_count ?? null,
             // Aggregated by the list query (withAvg/withCount). We round to

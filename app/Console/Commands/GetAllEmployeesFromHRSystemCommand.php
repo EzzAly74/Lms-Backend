@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\JobTitle;
 use App\Models\User;
 use App\Services\HRSystemService;
 use App\Services\JobTitleSyncService;
@@ -32,6 +33,21 @@ class GetAllEmployeesFromHRSystemCommand extends Command
         $page = 0;
         $batchSize = 10;
 
+        // Distinct jobName → job_titles.id lookup cache so we don't
+        // re-query the catalogue for every employee in a batch.
+        $jobTitleCache = [];
+        $resolveTitleId = static function (?string $jobName) use (&$jobTitleCache): ?int {
+            $jobName = $jobName !== null ? trim($jobName) : '';
+            if ($jobName === '') {
+                return null;
+            }
+            if (array_key_exists($jobName, $jobTitleCache)) {
+                return $jobTitleCache[$jobName];
+            }
+            $row = JobTitle::firstOrCreate(['name' => $jobName]);
+            return $jobTitleCache[$jobName] = $row->id;
+        };
+
         while (true) {
             // Get all employees from API
             $employees = $hrService->getAllEmployees();
@@ -46,19 +62,20 @@ class GetAllEmployeesFromHRSystemCommand extends Command
                 break;
             }
             foreach ($batch as $employee) {
-                // Job names are no longer stored on `users` — see the
-                // `2026_05_25_120100_drop_job_title_from_user_tables`
-                // migration. The HR-side jobName drives the standalone
-                // Job Titles catalogue below (JobTitleSyncService).
+                // `users.job_title` (string) was dropped by the 2026
+                // admin Users redesign; the link is now the
+                // `users.job_title_id` FK seeded here from HR's
+                // `jobName` field.
                 User::updateOrCreate(
                     ['system_id' => $employee->id], // unique key
                     [
-                        'name' => $employee->name,
-                        'email' => $employee->email,
-                        'phone' => $employee->phone,
-                        'machine_code' => $employee->machineCode,
+                        'name'            => $employee->name,
+                        'email'           => $employee->email,
+                        'phone'           => $employee->phone,
+                        'machine_code'    => $employee->machineCode,
                         'department_name' => $employee->departmentName,
-                        'updated_at' => now(),
+                        'job_title_id'    => $resolveTitleId($employee->jobName ?? null),
+                        'updated_at'      => now(),
                     ]
                 );
             }

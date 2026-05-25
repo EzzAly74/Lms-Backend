@@ -29,13 +29,20 @@ class DashboardService
                 $instructorName = optional($c->instructors->first())
                     ?->getTranslation('name', $locale);
 
+                // Derive status from the cohort calendar instead of the
+                // stored `active` flag. Mirrors what CourseResource and
+                // CourseDetailResource emit so the dashboard agrees with
+                // the Courses list / detail badges. The persisted
+                // `active` column may still lag until the daily
+                // `cohorts:sync-statuses` cron runs — this keeps the
+                // dashboard live in between.
                 return [
                     'id'                 => $c->id,
                     'title'              => $c->getTranslation('title', $locale),
                     'instructor'         => $instructorName ?: null,
                     'users_count'        => $enrolled,
                     'completion_percent' => $percent,
-                    'status'             => $c->active ? 'active' : 'inactive',
+                    'status'             => $c->effectiveStatus(),
                 ];
             });
 

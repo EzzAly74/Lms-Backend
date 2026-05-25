@@ -12,6 +12,15 @@ class CourseDetailResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        // Roll the stored `active` flag up against the cohort calendar.
+        // The effective status is what we surface to clients ("active"
+        // when a cohort is currently running, "upcoming" when one is
+        // queued, "inactive" otherwise) so the badge tells the truth
+        // without waiting for the nightly sync job to refresh stored
+        // columns. See Course::effectiveStatus().
+        $effectiveStatus = $this->resource->effectiveStatus();
+        $effectiveActive = $effectiveStatus === 'active';
+
         // Per-course override for "Max per Cohort". Falls back to the
         // platform-wide `default_cohort_size` setting so the Course Settings
         // panel always shows a useful number instead of an em-dash.
@@ -56,7 +65,12 @@ class CourseDetailResource extends JsonResource
                     'name' => $s->getTranslation('name', app()->getLocale()),
                 ]),
             ),
-            'sections'           => $this->whenLoaded('sections', fn () => $this->sections),
+            // Run sections through the resource so the cohort `status`
+            // field reflects the live calendar (scheduled → active →
+            // completed) rather than the stale persisted value.
+            'sections'           => $this->whenLoaded('sections',
+                fn () => CourseSectionResource::collection($this->sections),
+            ),
             'exams'              => $this->whenLoaded('exams', fn () => $this->exams->map(fn ($e) => [
                 'id'       => $e->id,
                 'title'    => $e->getTranslation('title', app()->getLocale()),
@@ -75,7 +89,8 @@ class CourseDetailResource extends JsonResource
             'certificate'              => (bool) $this->certificate,
             'certificate_pass_percent' => $this->certificate ? $passPercent : null,
             'title_for_certificate'    => $this->getTranslation('title_for_certificate', app()->getLocale()),
-            'active'             => (bool) $this->active,
+            'active'             => $effectiveActive,
+            'stored_active'      => (bool) $this->active,
             'for_public'         => (bool) $this->for_public,
             'is_evaluate'        => (bool) $this->is_evaluate,
             'outside_materials'  => (bool) $this->outside_materials,
@@ -84,8 +99,9 @@ class CourseDetailResource extends JsonResource
             'updated_at'         => $this->updated_at?->format('Y-m-d'),
             'course_type'        => $this->course_type,
             'type'               => $this->course_type,
-            'status'             => $this->active ? 'active' : 'inactive',
-            'active'             => (bool) $this->active,
+            // Drives the badge in the Courses table + the Course
+            // Settings card. Always derived — never stale.
+            'status'             => $effectiveStatus,
             'users_count'        => $this->users_count ?? null,
             'enrolled_count'     => $this->users_count ?? 0,
             'cohorts_count'      => (int) ($this->cohorts_count ?? $this->sessions_count ?? 0),

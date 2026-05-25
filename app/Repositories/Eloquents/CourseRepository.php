@@ -41,6 +41,10 @@ class CourseRepository extends BaseRepository implements CourseRepositoryInterfa
             ->with([
                 'category:id,name',
                 'instructors:id,name',
+                // Sections drive `effectiveStatus()` on the resource —
+                // eager-load them with just the columns we need so the
+                // list endpoint stays one query (no N+1).
+                'sections:id,course_id,start_date,end_date,status',
             ])
             ->withCount([
                 'users as users_count',
@@ -67,31 +71,60 @@ class CourseRepository extends BaseRepository implements CourseRepositoryInterfa
      * Return all admin tab counts in a single aggregate query so the list
      * page doesn't have to fire one paginated request per status.
      *
+     * Status is derived from `course_sections.start_date / end_date`
+     * (see Course::effectiveStatus) so the calendar drives the count:
+     *   - active   = any cohort `start_date <= today <= end_date` (and not stored `inactive`)
+     *   - upcoming = no active cohort, but at least one cohort `today < start_date`
+     *   - inactive = anything else (no cohorts, or every cohort completed/inactive)
+     *
      * @return array{all: int, active: int, inactive: int, pending: int, upcoming: int}
      */
     public function tabCounts(): array
     {
+        // `now()->toDateString()` is a controlled `YYYY-MM-DD` from the
+        // server clock — no user input, no injection surface — so we
+        // embed it directly instead of juggling 5+ identical `?`
+        // bindings across nested CASE/EXISTS expressions (Laravel's
+        // selectRaw binding indexing is fragile when the same value
+        // appears in multiple correlated subqueries).
+        $today = now()->toDateString();
+
+        $hasActiveExpr = "EXISTS (
+            SELECT 1 FROM course_sections cs
+            WHERE cs.course_id = courses.id
+              AND (cs.status IS NULL OR cs.status <> 'inactive')
+              AND cs.start_date IS NOT NULL AND cs.end_date IS NOT NULL
+              AND cs.start_date <= '{$today}' AND cs.end_date >= '{$today}'
+        )";
+        $hasScheduledExpr = "EXISTS (
+            SELECT 1 FROM course_sections cs
+            WHERE cs.course_id = courses.id
+              AND (cs.status IS NULL OR cs.status <> 'inactive')
+              AND cs.start_date IS NOT NULL
+              AND cs.start_date > '{$today}'
+        )";
+
         $row = $this->model->newQuery()
-            ->selectRaw('
-                COUNT(*)                                             AS all_count,
-                COUNT(CASE WHEN active = 1 THEN 1 END)               AS active_count,
-                COUNT(CASE WHEN active = 0 THEN 1 END)               AS inactive_count
-            ')
+            ->selectRaw("
+                COUNT(*) AS all_count,
+                SUM(CASE WHEN {$hasActiveExpr} THEN 1 ELSE 0 END) AS active_count,
+                SUM(CASE WHEN NOT {$hasActiveExpr} AND {$hasScheduledExpr} THEN 1 ELSE 0 END) AS upcoming_count
+            ")
             ->first();
 
         $all      = (int) ($row->all_count      ?? 0);
         $active   = (int) ($row->active_count   ?? 0);
-        $inactive = (int) ($row->inactive_count ?? 0);
+        $upcoming = (int) ($row->upcoming_count ?? 0);
+        $inactive = max(0, $all - $active - $upcoming);
 
         return [
             'all'      => $all,
             'active'   => $active,
             'inactive' => $inactive,
-            // The admin UI shows these tabs but the schema has no dedicated
-            // column for them — surface zeros so the contract stays stable
-            // until a future workflow column is introduced.
+            'upcoming' => $upcoming,
+            // No dedicated workflow column yet — surface zero so the tab
+            // contract stays stable until that lands.
             'pending'  => 0,
-            'upcoming' => 0,
         ];
     }
 
@@ -157,16 +190,47 @@ class CourseRepository extends BaseRepository implements CourseRepositoryInterfa
 
     /**
      * Apply the admin tab status filter without leaking the mapping into
-     * the controller layer.
+     * the controller layer. Status is computed from cohort dates so the
+     * filter agrees with what CourseResource emits.
      */
     private function applyStatusFilter($query, string $status)
     {
+        $today = now()->toDateString();
+
+        $activeExists = function ($q) use ($today) {
+            $q->from('course_sections')
+              ->whereColumn('course_sections.course_id', 'courses.id')
+              ->where(function ($q2) {
+                  $q2->whereNull('course_sections.status')
+                     ->orWhere('course_sections.status', '!=', 'inactive');
+              })
+              ->whereNotNull('course_sections.start_date')
+              ->whereNotNull('course_sections.end_date')
+              ->whereDate('course_sections.start_date', '<=', $today)
+              ->whereDate('course_sections.end_date',   '>=', $today);
+        };
+
+        $scheduledExists = function ($q) use ($today) {
+            $q->from('course_sections')
+              ->whereColumn('course_sections.course_id', 'courses.id')
+              ->where(function ($q2) {
+                  $q2->whereNull('course_sections.status')
+                     ->orWhere('course_sections.status', '!=', 'inactive');
+              })
+              ->whereNotNull('course_sections.start_date')
+              ->whereDate('course_sections.start_date', '>', $today);
+        };
+
         return match ($status) {
-            'active'             => $query->where('active', true),
-            'inactive',
-            'pending',
-            'upcoming'           => $query->where('active', false),
-            default              => $query,
+            'active'   => $query->whereExists($activeExists),
+            'upcoming' => $query
+                ->whereNotExists($activeExists)
+                ->whereExists($scheduledExists),
+            'inactive' => $query
+                ->whereNotExists($activeExists)
+                ->whereNotExists($scheduledExists),
+            'pending'  => $query->whereRaw('0 = 1'), // workflow column not built yet
+            default    => $query,
         };
     }
 }

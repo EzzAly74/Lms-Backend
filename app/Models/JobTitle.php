@@ -27,17 +27,17 @@ class JobTitle extends Model
     /**
      * Employees holding this job title.
      *
-     * The HR system of record exposes a dedicated job catalogue
-     * (`/api/Job`) **and** the per-employee `jobName` field returned by
-     * `/api/Employee/GetCurrentEmployees`. The `sync:employees` artisan
-     * command writes that `jobName` straight into `users.job_title`,
-     * while {@see \App\Services\JobTitleSyncService::syncFromHr()}
-     * upserts the catalogue rows. Joining via the natural string key
-     * keeps the two columns referentially aligned without an extra FK
-     * and lets `withCount('users')` deliver the per-card employee count.
+     * The 2026 admin Users redesign dropped the denormalized
+     * `users.job_title` string column, and the
+     * `2026_05_25_140000_add_job_title_id_to_users_table` migration
+     * re-established the link as a proper FK on `users.job_title_id`.
+     * HR sync (`GetAllEmployeesFromHRSystemCommand`) is responsible
+     * for keeping that FK aligned with the HR-side `jobName` field;
+     * until it runs against a freshly-migrated database, the
+     * `employees_count` on each job-title card legitimately reads `0`.
      */
     public function users(): HasMany
     {
-        return $this->hasMany(User::class, 'job_title', 'name');
+        return $this->hasMany(User::class, 'job_title_id');
     }
 }
