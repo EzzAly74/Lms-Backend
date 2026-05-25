@@ -30,6 +30,10 @@ class GetAllEmployeesFromHRSystemJob implements ShouldQueue
     {
         $hrService = new HRSystemService();
         $employees = $hrService->getAllEmployees();
+        // The 2026 admin Users redesign dropped `users.job_title`; HR-side
+        // job names now live exclusively on the separate `job_titles`
+        // taxonomy (see JobTitleSyncService) and are no longer mirrored
+        // back onto the user row.
         User::upsert($employees->map(function ($employee) {
             return [
                 'system_id'       => $employee->id,
@@ -38,8 +42,7 @@ class GetAllEmployeesFromHRSystemJob implements ShouldQueue
                 'phone'           => $employee->phone,
                 'machine_code'    => $employee->machineCode,
                 'department_name' => $employee->departmentName,
-                'job_title'       => $employee->jobName,
             ];
-        })->toArray(), ['system_id'], ['name','email','phone','machine_code','department_name','job_title']);
+        })->toArray(), ['system_id'], ['name','email','phone','machine_code','department_name']);
     }
 }

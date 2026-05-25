@@ -46,6 +46,10 @@ class GetAllEmployeesFromHRSystemCommand extends Command
                 break;
             }
             foreach ($batch as $employee) {
+                // Job names are no longer stored on `users` — see the
+                // `2026_05_25_120100_drop_job_title_from_user_tables`
+                // migration. The HR-side jobName drives the standalone
+                // Job Titles catalogue below (JobTitleSyncService).
                 User::updateOrCreate(
                     ['system_id' => $employee->id], // unique key
                     [
@@ -54,7 +58,6 @@ class GetAllEmployeesFromHRSystemCommand extends Command
                         'phone' => $employee->phone,
                         'machine_code' => $employee->machineCode,
                         'department_name' => $employee->departmentName,
-                        'job_title' => $employee->jobName,
                         'updated_at' => now(),
                     ]
                 );

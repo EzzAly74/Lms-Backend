@@ -3,6 +3,7 @@
 namespace App\Repositories\Eloquents;
 
 use App\Models\Course;
+use App\Models\PublicNotification;
 use App\Repositories\Contracts\DashboardRepositoryInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -210,38 +211,44 @@ class DashboardRepository implements DashboardRepositoryInterface
         return $buckets;
     }
 
+    /**
+     * Recent notifications card on the admin dashboard — sourced directly
+     * from the same `public_notifications` table that the notifications
+     * drawer + `/api/v1/notifications` endpoint use. Returns the most
+     * recently created entries, ordered newest first.
+     *
+     * The translatable `title` / `body` JSON columns are emitted as full
+     * locale objects (`{ ar, en }`) so the frontend can localise them on
+     * the fly without an extra request when the UI language is toggled.
+     *
+     * `created_at` is included raw (ISO-8601) — the frontend renders a
+     * relative-time chip from it ("today", "yesterday", ...) so the
+     * server doesn't bake an English label into the payload.
+     *
+     * @return array<int, array{
+     *     id: int,
+     *     title: array{ar?:string, en?:string},
+     *     body: array{ar?:string, en?:string},
+     *     for_public: bool,
+     *     created_at: string|null,
+     * }>
+     */
     public function getRecentNotifications(int $limit): array
     {
-        $stats = $this->getStatistics();
-        $items = [];
-
-        if ((int) ($stats['unanswered_questions'] ?? 0) > 0) {
-            $items[] = [
-                'title'  => 'Unanswered lecture questions',
-                'detail' => (int) $stats['unanswered_questions'] . ' questions need a response',
-                'time'   => 'now',
-                'type'   => 'warning',
-            ];
-        }
-
-        if ((int) ($stats['awaiting_publish'] ?? 0) > 0) {
-            $items[] = [
-                'title'  => 'Courses awaiting publish',
-                'detail' => (int) $stats['awaiting_publish'] . ' inactive courses',
-                'time'   => 'today',
-                'type'   => 'info',
-            ];
-        }
-
-        if ((int) ($stats['user_assignments'] ?? 0) > 0) {
-            $items[] = [
-                'title'  => 'Assignment submissions',
-                'detail' => (int) $stats['user_assignments'] . ' total submissions',
-                'time'   => 'today',
-                'type'   => 'info',
-            ];
-        }
-
-        return array_slice($items, 0, $limit);
+        return PublicNotification::query()
+            ->select(['id', 'title', 'body', 'for_public', 'created_at'])
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get()
+            ->map(static function (PublicNotification $n): array {
+                return [
+                    'id'         => (int) $n->id,
+                    'title'      => $n->getTranslations('title'),
+                    'body'       => $n->getTranslations('body'),
+                    'for_public' => (bool) $n->for_public,
+                    'created_at' => optional($n->created_at)->toIso8601String(),
+                ];
+            })
+            ->all();
     }
 }

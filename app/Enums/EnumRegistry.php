@@ -35,6 +35,9 @@ final class EnumRegistry
         'course_status' => [
             'values' => ['all', 'pending', 'active', 'upcoming', 'inactive'],
         ],
+        'course_level' => [
+            'values' => ['beginner', 'intermediate', 'professional'],
+        ],
         'cohort_status' => [
             'values' => ['scheduled', 'active', 'completed', 'inactive'],
         ],

@@ -185,7 +185,6 @@ class UserController extends ApiController
             'email'           => 'sometimes|nullable|email|max:255',
             'phone'           => 'sometimes|nullable|string|max:50',
             'department_name' => 'sometimes|nullable|string|max:255',
-            'job_title'       => 'sometimes|nullable|string|max:255',
             'learner_type'    => 'sometimes|nullable|in:online,offline,hybrid',
         ]);
 

@@ -24,6 +24,12 @@ return [
         'inactive' => 'غير نشطة',
     ],
 
+    'course_level' => [
+        'beginner'     => 'مبتدئ',
+        'intermediate' => 'متوسط',
+        'professional' => 'محترف',
+    ],
+
     'cohort_status' => [
         'scheduled' => 'مجدولة',
         'active'    => 'جارية',

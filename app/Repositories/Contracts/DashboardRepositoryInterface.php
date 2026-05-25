@@ -18,6 +18,19 @@ interface DashboardRepositoryInterface
      */
     public function getEnrollmentTrendByRange(string $range): array;
 
-    /** @return array<int, array{title: string, detail?: string, time?: string, type?: string}> */
+    /**
+     * Recent admin-dashboard notifications card. Returns the most recent
+     * persisted `public_notifications` rows with translatable `title` and
+     * `body` JSON columns kept intact (so the frontend can localise them
+     * without a re-fetch).
+     *
+     * @return array<int, array{
+     *     id: int,
+     *     title: array{ar?:string, en?:string},
+     *     body: array{ar?:string, en?:string},
+     *     for_public: bool,
+     *     created_at: string|null,
+     * }>
+     */
     public function getRecentNotifications(int $limit): array;
 }

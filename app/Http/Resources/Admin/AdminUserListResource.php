@@ -2,21 +2,27 @@
 
 namespace App\Http\Resources\Admin;
 
+use App\Http\Traits\HasFile;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * List-view resource for the admin Users overview, matching the Figma
  * table columns:
- *   Name (avatar + email) · Role · Job Role · Compliance · Status · Last Active
+ *   Name (avatar + email) · Role · Compliance · Status · Last Active
  *
  * The underlying record is a stdClass row produced by AdminUserService's
  * UNION ALL across the `users`, `instructors`, and `admins` tables. Every
  * row exposes a (`source`, `id`) pair so the frontend knows which sub-
  * endpoint to call for follow-up CRUD operations.
+ *
+ * The legacy "Job Role" field is gone in the 2026 redesign — `job_title`
+ * has been dropped from every person table.
  */
 class AdminUserListResource extends JsonResource
 {
+    use HasFile;
+
     public function toArray(Request $request): array
     {
         $row    = $this->resource;
@@ -31,6 +37,9 @@ class AdminUserListResource extends JsonResource
         $compliance = $row->compliance_pct;
         $compliance = $compliance === null ? null : (int) $compliance;
 
+        $imageField = isset($row->image) ? (string) $row->image : '';
+        $imageUrl   = $imageField !== '' ? $this->getFileUrl($imageField) : null;
+
         return [
             'id'                     => (int)  ($row->id ?? 0),
             'source'                 => (string) ($row->source ?? 'user'),
@@ -42,7 +51,7 @@ class AdminUserListResource extends JsonResource
             'phone'                  => $row->phone,
             'machine_code'           => $row->machine_code,
             'department_name'        => $row->department_name,
-            'job_title'              => $row->job_title,
+            'image'                  => $imageUrl ?: null,
             'role'                   => (string) ($row->role_label ?? 'Learner'),
             'role_key'               => (string) ($row->role_key   ?? 'learner'),
             'status'                 => (string) ($row->status     ?? 'active'),

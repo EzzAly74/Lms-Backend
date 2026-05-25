@@ -30,6 +30,12 @@ return [
         'inactive' => 'Inactive',
     ],
 
+    'course_level' => [
+        'beginner'     => 'Beginner',
+        'intermediate' => 'Intermediate',
+        'professional' => 'Professional',
+    ],
+
     'cohort_status' => [
         'scheduled' => 'Scheduled',
         'active'    => 'Active',

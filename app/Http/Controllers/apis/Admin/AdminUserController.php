@@ -44,7 +44,7 @@ class AdminUserController extends ApiController
      *   - page, per_page
      *   - role          (admin | instructor | learner)
      *   - status        (active | inactive | deactivated)
-     *   - search        (matches name / email / job_title)
+     *   - search        (matches name / email)
      *   - instructor_ids[]  (filter the Instructors pill by specific ids)
      */
     public function index(Request $request): JsonResponse
@@ -154,8 +154,21 @@ class AdminUserController extends ApiController
 
     private function normaliseRole(mixed $value): ?string
     {
-        $value = is_string($value) ? strtolower(trim($value)) : null;
-        return in_array($value, ['admin', 'instructor', 'learner'], true) ? $value : null;
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $value = trim($value);
+        if ($value === '' || $value === 'all') {
+            return null;
+        }
+
+        // No allowlist here — the Add/Edit modal sources roles from the
+        // dynamic `roles` table, so the dropdown can carry custom role
+        // machine names (e.g. "reports-viewer"). AdminUserService scopes
+        // the resulting query through the Spatie pivot, which is itself
+        // a uniqueness boundary.
+        return $value;
     }
 
     private function normaliseStatus(mixed $value): ?string

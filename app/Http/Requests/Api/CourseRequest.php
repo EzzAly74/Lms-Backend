@@ -25,6 +25,7 @@ class CourseRequest extends FormRequest
         return [
             'course_type' => 'course_type',
             'type'        => 'course_type',
+            'level'       => 'course_level',
         ];
     }
 
@@ -86,7 +87,7 @@ class CourseRequest extends FormRequest
             'hours'                   => 'required|integer|min:1',
             'max_learners'            => 'nullable|integer|min:1|max:10000',
             'language'                => 'nullable|string|max:50',
-            'level'                   => 'nullable|string|max:50',
+            'level'                   => 'nullable|in:beginner,intermediate,professional',
             'certificate'             => 'required|boolean',
             'image'                   => $imageRule,
             'active'                  => 'nullable|boolean',

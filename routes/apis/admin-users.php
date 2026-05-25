@@ -35,7 +35,9 @@ Route::middleware(['auth.user', 'role:Admin'])->prefix('admin')->group(function 
     Route::get('users/{source}/{id}',    [AdminUserController::class, 'show'])
         ->whereIn('source', ['user', 'instructor', 'admin'])
         ->whereNumber('id');
-    Route::put('users/{source}/{id}',    [AdminUserController::class, 'update'])
+    // Accept both PUT (JSON) and POST (`_method=PUT`, multipart) so the
+    // frontend can upload a new avatar without juggling two endpoints.
+    Route::match(['put', 'post'], 'users/{source}/{id}', [AdminUserController::class, 'update'])
         ->whereIn('source', ['user', 'instructor', 'admin'])
         ->whereNumber('id');
     Route::delete('users/{source}/{id}', [AdminUserController::class, 'destroy'])

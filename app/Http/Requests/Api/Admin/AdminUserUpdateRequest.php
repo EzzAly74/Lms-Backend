@@ -37,12 +37,15 @@ class AdminUserUpdateRequest extends FormRequest
                 'sometimes', 'nullable', 'email', 'max:255',
                 Rule::unique($table, 'email')->ignore($id),
             ],
-            'role'            => ['sometimes', 'nullable', Rule::in(['admin', 'instructor', 'learner'])],
-            'job_title'       => ['sometimes', 'nullable', 'string', 'max:255'],
+            'role'            => [
+                'sometimes', 'nullable',
+                Rule::exists('roles', 'name')->where(fn ($q) => $q->where('guard_name', 'admin')),
+            ],
             'department_name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'phone'           => ['sometimes', 'nullable', 'string', 'max:50'],
             'learner_type'    => ['sometimes', 'nullable', Rule::in(['online', 'offline', 'hybrid'])],
             'status'          => ['sometimes', 'nullable', Rule::in(['active', 'inactive', 'deactivated'])],
+            'image'           => ['sometimes', 'nullable', 'image', 'mimes:png,jpg,jpeg,webp,svg,gif', 'max:3072'],
         ];
     }
 }

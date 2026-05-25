@@ -27,8 +27,7 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
                 $inner->where('name', 'LIKE', "%{$search}%")
                     ->orWhere('email', 'LIKE', "%{$search}%")
                     ->orWhere('machine_code', 'LIKE', "%{$search}%")
-                    ->orWhere('department_name', 'LIKE', "%{$search}%")
-                    ->orWhere('job_title', 'LIKE', "%{$search}%");
+                    ->orWhere('department_name', 'LIKE', "%{$search}%");
             }))
             // `role=instructor` → only users with the Spatie 'instructor' role.
             // `role=learner`    → every user is a learner by default in this
