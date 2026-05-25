@@ -2,13 +2,37 @@
 
 namespace App\Http\Requests\Api;
 
+use App\Http\Traits\AcceptsEnumIds;
 use Illuminate\Foundation\Http\FormRequest;
 
 class LmsResourceRequest extends FormRequest
 {
+    use AcceptsEnumIds;
+
     public function authorize(): bool
     {
         return true;
+    }
+
+    /**
+     * Tell {@see AcceptsEnumIds} which incoming fields are enum IDs and
+     * which backend enum they map to. The frontend's `p-dropdown`s now
+     * post a numeric `id`; this trait normalizes it back to the string
+     * code (`"article"`, `"link"`, `"file"`) so the rest of the
+     * validator and storage layer remains untouched.
+     *
+     * @return array<string, string>
+     */
+    protected function enumFieldMap(): array
+    {
+        return [
+            'type' => 'resource_type',
+        ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->normalizeEnumIdsToCodes();
     }
 
     public function rules(): array

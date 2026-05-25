@@ -62,6 +62,7 @@ use OpenApi\Annotations as OA;
  * @OA\Tag(name="Progress",              description="Aggregate progress reports")
  * @OA\Tag(name="My",                    description="User-facing aggregate endpoints under /my/*")
  * @OA\Tag(name="Webhooks",              description="Inbound webhooks (HR system -> LMS)")
+ * @OA\Tag(name="Enums",                 description="Reference dropdown data — localized {value,label} option sets for every backend enum (course_type, cohort_status, module_content_type, etc.). Honors Accept-Language: en|ar. The frontend pulls these instead of hardcoding option lists.")
  */
 class Info
 {

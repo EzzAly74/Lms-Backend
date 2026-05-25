@@ -6036,6 +6036,45 @@
                 ]
             }
         },
+        "/enums": {
+            "get": {
+                "tags": [
+                    "Enums"
+                ],
+                "summary": "Bulk: every enum at once (localized).",
+                "description": "Optional convenience endpoint. Returns the full enum map so the frontend can prime its dropdown cache in a single round-trip. Honors `Accept-Language: en|ar`. The keys of `result` are the enum names; each value is the ordered list of `{id, value, description?}` options for that enum.",
+                "operationId": "9ed59e00cd288ddd811513994c421038",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Map of every registered enum.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "result": {
+                                                    "$ref": "#/components/schemas/EnumMap"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/evaluation-categories": {
             "get": {
                 "tags": [
@@ -11147,6 +11186,708 @@
                     }
                 ]
             }
+        },
+        "/enums/course_type": {
+            "get": {
+                "tags": [
+                    "Enums"
+                ],
+                "summary": "Course delivery type options.",
+                "description": "Allowed values: online, offline, hybrid, external_link.",
+                "operationId": "enums.course_type",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Course type options.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "result": {
+                                                    "$ref": "#/components/schemas/EnumOptionList"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/enums/course_status": {
+            "get": {
+                "tags": [
+                    "Enums"
+                ],
+                "summary": "Course list filter tabs.",
+                "description": "Allowed values: all, pending, active, upcoming, inactive.",
+                "operationId": "enums.course_status",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Course status options.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "result": {
+                                                    "$ref": "#/components/schemas/EnumOptionList"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/enums/cohort_status": {
+            "get": {
+                "tags": [
+                    "Enums"
+                ],
+                "summary": "Cohort / section status options.",
+                "description": "Allowed values: scheduled, active, completed, inactive.",
+                "operationId": "enums.cohort_status",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cohort status options.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "result": {
+                                                    "$ref": "#/components/schemas/EnumOptionList"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/enums/module_content_type": {
+            "get": {
+                "tags": [
+                    "Enums"
+                ],
+                "summary": "Course module content type options.",
+                "description": "Allowed values: video, document, article, link.",
+                "operationId": "enums.module_content_type",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Module content type options.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "result": {
+                                                    "$ref": "#/components/schemas/EnumOptionList"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/enums/module_learner_scope": {
+            "get": {
+                "tags": [
+                    "Enums"
+                ],
+                "summary": "Course module learner scope options.",
+                "description": "Allowed values: all, cohort.",
+                "operationId": "enums.module_learner_scope",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Module learner scope options.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "result": {
+                                                    "$ref": "#/components/schemas/EnumOptionList"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/enums/resource_type": {
+            "get": {
+                "tags": [
+                    "Enums"
+                ],
+                "summary": "LMS resource (knowledge base) type options.",
+                "description": "Allowed values: article, link, file.",
+                "operationId": "enums.resource_type",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Resource type options.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "result": {
+                                                    "$ref": "#/components/schemas/EnumOptionList"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/enums/certificate_basis": {
+            "get": {
+                "tags": [
+                    "Enums"
+                ],
+                "summary": "Certificate award basis options (ships descriptions).",
+                "description": "Allowed values: attendance, score, both. Each option ships a `description` field used by the radio cards on the Platform Settings page.",
+                "operationId": "enums.certificate_basis",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Certificate basis options.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "result": {
+                                                    "$ref": "#/components/schemas/EnumOptionList"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/enums/locale": {
+            "get": {
+                "tags": [
+                    "Enums"
+                ],
+                "summary": "Supported UI locale options.",
+                "description": "Allowed values: en, ar.",
+                "operationId": "enums.locale",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Locale options.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "result": {
+                                                    "$ref": "#/components/schemas/EnumOptionList"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/enums/cohort_scope": {
+            "get": {
+                "tags": [
+                    "Enums"
+                ],
+                "summary": "Quiz / assignment cohort scope options.",
+                "description": "Allowed values: all, specific.",
+                "operationId": "enums.cohort_scope",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cohort scope options.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "result": {
+                                                    "$ref": "#/components/schemas/EnumOptionList"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/enums/question_type": {
+            "get": {
+                "tags": [
+                    "Enums"
+                ],
+                "summary": "Quiz / assignment question type options.",
+                "description": "Allowed values: mcq, yes_no, open, reorder.",
+                "operationId": "enums.question_type",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Question type options.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "result": {
+                                                    "$ref": "#/components/schemas/EnumOptionList"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/enums/dashboard_range": {
+            "get": {
+                "tags": [
+                    "Enums"
+                ],
+                "summary": "Admin dashboard time-range tab options.",
+                "description": "Allowed values: week, month, quarter, year.",
+                "operationId": "enums.dashboard_range",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Dashboard range options.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "result": {
+                                                    "$ref": "#/components/schemas/EnumOptionList"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/enums/role_color": {
+            "get": {
+                "tags": [
+                    "Enums"
+                ],
+                "summary": "Role badge color swatch options.",
+                "description": "Allowed values: teal, green, orange, red, blue.",
+                "operationId": "enums.role_color",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Role color options.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "result": {
+                                                    "$ref": "#/components/schemas/EnumOptionList"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/enums/role_guard": {
+            "get": {
+                "tags": [
+                    "Enums"
+                ],
+                "summary": "Spatie role guard options.",
+                "description": "Allowed values: admin, web.",
+                "operationId": "enums.role_guard",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Role guard options.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "result": {
+                                                    "$ref": "#/components/schemas/EnumOptionList"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/enums/inbox_tab": {
+            "get": {
+                "tags": [
+                    "Enums"
+                ],
+                "summary": "Inbox / messages tab filter options.",
+                "description": "Allowed values: all, unread, sent, resolved.",
+                "operationId": "enums.inbox_tab",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Inbox tab options.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "result": {
+                                                    "$ref": "#/components/schemas/EnumOptionList"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/enums/user_status": {
+            "get": {
+                "tags": [
+                    "Enums"
+                ],
+                "summary": "Admin user account status options.",
+                "description": "Allowed values: active, inactive, deactivated.",
+                "operationId": "enums.user_status",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User status options.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "result": {
+                                                    "$ref": "#/components/schemas/EnumOptionList"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/enums/learner_type": {
+            "get": {
+                "tags": [
+                    "Enums"
+                ],
+                "summary": "Learner enrollment type options.",
+                "description": "Allowed values: online, offline, hybrid.",
+                "operationId": "enums.learner_type",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Learner type options.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "result": {
+                                                    "$ref": "#/components/schemas/EnumOptionList"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/enums/lifecycle_status": {
+            "get": {
+                "tags": [
+                    "Enums"
+                ],
+                "summary": "Quiz / assignment lifecycle status options.",
+                "description": "Allowed values: draft, active.",
+                "operationId": "enums.lifecycle_status",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lifecycle status options.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "result": {
+                                                    "$ref": "#/components/schemas/EnumOptionList"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/enums/enrollment_status": {
+            "get": {
+                "tags": [
+                    "Enums"
+                ],
+                "summary": "Learner enrollment progress status options.",
+                "description": "Allowed values: not_started, in_progress, completed. Used by the Learners tab on the course detail page.",
+                "operationId": "enums.enrollment_status",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Enrollment status options.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "result": {
+                                                    "$ref": "#/components/schemas/EnumOptionList"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -11891,6 +12632,98 @@
                     }
                 },
                 "type": "object"
+            },
+            "EnumOption": {
+                "description": "One dropdown option for a backend enum. `id` is a stable 1-indexed numeric identifier — the value the frontend POSTs/PUTs back. `value` is the localized display label rendered in the UI. `code` is the underlying string machine code (e.g. \"online\"); use it when you need to interoperate with legacy string columns.",
+                "required": [
+                    "id",
+                    "value",
+                    "code"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Stable numeric identifier (1-indexed). Sent on POST/PUT.",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "value": {
+                        "description": "Localized display label for the active Accept-Language.",
+                        "type": "string",
+                        "example": "Online"
+                    },
+                    "code": {
+                        "description": "Underlying string machine code (matches the DB column).",
+                        "type": "string",
+                        "example": "online"
+                    },
+                    "description": {
+                        "description": "Optional localized helper text (only set for enums that ship descriptions, e.g. certificate_basis).",
+                        "type": "string",
+                        "example": null,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "EnumOptionList": {
+                "description": "Ordered list of options for a single enum.",
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/EnumOption"
+                }
+            },
+            "EnumMap": {
+                "description": "Every enum keyed by its name. Returned by GET /api/v1/enums so the frontend can prime its dropdown cache in a single round-trip.",
+                "type": "object",
+                "example": {
+                    "course_type": [
+                        {
+                            "id": 1,
+                            "value": "Online",
+                            "code": "online"
+                        },
+                        {
+                            "id": 2,
+                            "value": "Offline",
+                            "code": "offline"
+                        },
+                        {
+                            "id": 3,
+                            "value": "Hybrid",
+                            "code": "hybrid"
+                        },
+                        {
+                            "id": 4,
+                            "value": "External Link",
+                            "code": "external_link"
+                        }
+                    ],
+                    "cohort_status": [
+                        {
+                            "id": 1,
+                            "value": "Scheduled",
+                            "code": "scheduled"
+                        },
+                        {
+                            "id": 2,
+                            "value": "Active",
+                            "code": "active"
+                        },
+                        {
+                            "id": 3,
+                            "value": "Completed",
+                            "code": "completed"
+                        },
+                        {
+                            "id": 4,
+                            "value": "Inactive",
+                            "code": "inactive"
+                        }
+                    ]
+                },
+                "additionalProperties": {
+                    "$ref": "#/components/schemas/EnumOptionList"
+                }
             },
             "TranslatedString": {
                 "description": "Bilingual string used for translatable INPUT bodies. Response bodies return a single localized string based on the request locale.",
@@ -12693,6 +13526,10 @@
         {
             "name": "Webhooks",
             "description": "Inbound webhooks (HR system -> LMS)"
+        },
+        {
+            "name": "Enums",
+            "description": "Reference dropdown data — localized {value,label} option sets for every backend enum (course_type, cohort_status, module_content_type, etc.). Honors Accept-Language: en|ar. The frontend pulls these instead of hardcoding option lists."
         }
     ]
 }

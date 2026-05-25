@@ -2,17 +2,36 @@
 
 namespace App\Http\Requests\Api;
 
+use App\Http\Traits\AcceptsEnumIds;
 use Illuminate\Foundation\Http\FormRequest;
 
 class CourseRequest extends FormRequest
 {
+    use AcceptsEnumIds;
+
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * Enum fields on this request. Frontends may submit either the numeric
+     * dropdown id (preferred, matches `/api/v1/enums/course_type`) OR the
+     * legacy string code — the trait normalizes both to the string before
+     * validation runs.
+     */
+    protected function enumFieldMap(): array
+    {
+        return [
+            'course_type' => 'course_type',
+            'type'        => 'course_type',
+        ];
+    }
+
     protected function prepareForValidation(): void
     {
+        $this->normalizeEnumIdsToCodes();
+
         $merge = [];
 
         if ($this->has('instructor_id') && ! $this->has('instructors')) {
