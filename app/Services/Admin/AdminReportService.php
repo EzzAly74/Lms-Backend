@@ -3,6 +3,7 @@
 namespace App\Services\Admin;
 
 use App\Models\ReportExportLog;
+use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -132,14 +133,29 @@ class AdminReportService
     public function compliancePreview(int $limit = 25): array
     {
         // Pre-compute the role bucket in a derived subquery so the outer
-        // aggregation can group on a single plain column. This avoids the
-        // MySQL `ONLY_FULL_GROUP_BY` error that fires when the same
-        // COALESCE/NULLIF expression appears in both SELECT and GROUP BY.
+        // aggregation can group on a single plain column. The 2026
+        // redesign dropped `users.job_title`, so the bucket key now
+        // comes from the Spatie `model_has_roles` pivot — falling back
+        // to "Learner" for users without an admin-guard role.
+        $locale = app()->getLocale();
+        $userClass = User::class;
+
         $usersSub = DB::table('users')
+            ->leftJoin('model_has_roles AS mhr', function ($j) use ($userClass) {
+                $j->on('mhr.model_id', '=', 'users.id')
+                  ->where('mhr.model_type', '=', $userClass);
+            })
+            ->leftJoin('roles', function ($j) {
+                $j->on('roles.id', '=', 'mhr.role_id')
+                  ->where('roles.guard_name', '=', 'admin');
+            })
             ->select(
                 'users.id AS user_id',
                 'users.department_name AS department_name',
-                DB::raw('COALESCE(NULLIF(users.job_title, ""), "Unassigned") AS role_key'),
+                DB::raw(sprintf(
+                    'COALESCE(NULLIF(roles.%s, ""), NULLIF(roles.name_en, ""), roles.name, "Learner") AS role_key',
+                    $locale === 'ar' ? 'name_ar' : 'name_en',
+                )),
             );
 
         $rows = DB::query()
@@ -258,22 +274,34 @@ class AdminReportService
      */
     private function buildIndividualCompliance(): array
     {
+        $locale    = app()->getLocale();
+        $userClass = User::class;
+        $roleNameExpr = $locale === 'ar' ? 'roles.name_ar' : 'roles.name_en';
+
         $rows = DB::table('users')
             ->leftJoin('users_courses AS uc', 'uc.user_id', '=', 'users.id')
+            ->leftJoin('model_has_roles AS mhr', function ($j) use ($userClass) {
+                $j->on('mhr.model_id', '=', 'users.id')
+                  ->where('mhr.model_type', '=', $userClass);
+            })
+            ->leftJoin('roles', function ($j) {
+                $j->on('roles.id', '=', 'mhr.role_id')
+                  ->where('roles.guard_name', '=', 'admin');
+            })
             ->select(
                 'users.id',
                 'users.name',
                 'users.email',
-                'users.job_title',
+                DB::raw("COALESCE(NULLIF({$roleNameExpr}, ''), NULLIF(roles.name_en, ''), roles.name, 'Learner') AS role_label"),
                 'users.department_name',
                 DB::raw('COUNT(uc.id) AS enrolled_courses'),
             )
-            ->groupBy('users.id', 'users.name', 'users.email', 'users.job_title', 'users.department_name')
+            ->groupBy('users.id', 'users.name', 'users.email', 'role_label', 'users.department_name')
             ->orderBy('users.name')
             ->get();
 
         return [
-            ['User ID', 'Name', 'Email', 'Job Title', 'Department', 'Enrolled Courses', 'Status'],
+            ['User ID', 'Name', 'Email', 'Role', 'Department', 'Enrolled Courses', 'Status'],
             $rows->map(static function ($r) {
                 $enrolled = (int) $r->enrolled_courses;
                 $status   = $enrolled === 0 ? 'Not started' : ($enrolled >= 1 ? 'In progress' : 'Complete');
@@ -282,7 +310,7 @@ class AdminReportService
                     $r->id,
                     $r->name,
                     $r->email,
-                    $r->job_title ?? '',
+                    $r->role_label ?? '',
                     $r->department_name ?? '',
                     $enrolled,
                     $status,

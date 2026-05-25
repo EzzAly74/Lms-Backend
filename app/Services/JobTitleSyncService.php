@@ -86,10 +86,10 @@ class JobTitleSyncService
 
     /**
      * Offline projection: derive the catalogue from the local `users`
-     * table when HR is unreachable. The HR field of record is
-     * `users.job_title` (populated by `sync:employees`); we fall back
-     * to `department_name` only if every user's job_title is empty,
-     * so a freshly-imported fixture still produces a useful screen.
+     * table when HR is unreachable. The 2026 admin Users redesign
+     * dropped `users.job_title`, so we now bucket strictly by
+     * `department_name` for the offline fallback. The HR-driven path
+     * ({@see syncFromHr()}) remains the canonical source of truth.
      *
      * @return array{source_rows:int, eligible:int, created:int, unchanged:int, orphaned:int, pruned:int}
      */
@@ -179,28 +179,14 @@ class JobTitleSyncService
     }
 
     /**
-     * Distinct, trimmed job-title values from the local users table —
-     * preferring `job_title` and falling back to `department_name` when
-     * the former is empty (legacy fixtures predate that column).
+     * Distinct, trimmed department names from the local users table —
+     * the offline fallback bucket since `users.job_title` was dropped
+     * by the 2026 admin Users redesign.
      *
      * @return array<int, string>
      */
     private function distinctLocalUserNames(): array
     {
-        $fromJobTitle = DB::table('users')
-            ->selectRaw('DISTINCT TRIM(job_title) AS name')
-            ->whereNotNull('job_title')
-            ->whereRaw('TRIM(job_title) <> ""')
-            ->orderBy('name')
-            ->pluck('name')
-            ->filter()
-            ->values()
-            ->all();
-
-        if ($fromJobTitle !== []) {
-            return $fromJobTitle;
-        }
-
         return DB::table('users')
             ->selectRaw('DISTINCT TRIM(department_name) AS name')
             ->whereNotNull('department_name')
