@@ -15,6 +15,546 @@
         }
     ],
     "paths": {
+        "/mobile/academy/summary": {
+            "get": {
+                "tags": [
+                    "Mobile"
+                ],
+                "summary": "📱 [MOBILE · S-01] Academy entry card data",
+                "description": "📱 **MOBILE** · Screen **S-01 — Academy entry card** · Audience: Employee/Learner mobile app · Returns the available-courses count + has-available flag for the Academy card.",
+                "operationId": "2a2a66eb553171ccd708310ff8a63f73",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/MobileAuthorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/EmployeeCode"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/academy/categories": {
+            "get": {
+                "tags": [
+                    "Mobile"
+                ],
+                "summary": "📱 [MOBILE · S-02] Category chips",
+                "description": "📱 **MOBILE** · Screen **S-02 — Course list** · Audience: Employee/Learner mobile app · Returns the filter chips (`All` + every category that has at least one joinable course for this user).",
+                "operationId": "971eb33ce3c63508cf61fd7fe92f4d41",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/MobileAuthorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/EmployeeCode"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/academy/courses": {
+            "get": {
+                "tags": [
+                    "Mobile"
+                ],
+                "summary": "📱 [MOBILE · S-02] Available courses list",
+                "description": "📱 **MOBILE** · Screen **S-02 — Course list** · Audience: Employee/Learner mobile app · Paginated feed of courses with at least one joinable upcoming cohort for THIS user.",
+                "operationId": "db1b46bd9e095304061bf0caa3218190",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/MobileAuthorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/EmployeeCode"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    },
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/academy/courses/{course}": {
+            "get": {
+                "tags": [
+                    "Mobile"
+                ],
+                "summary": "📱 [MOBILE · S-03] Course detail",
+                "description": "📱 **MOBILE** · Screen **S-03 — Course detail & enrolment** · Audience: Employee/Learner mobile app · Returns the full detail view-model including anchor cohort + typed CTA state.",
+                "operationId": "985a492539c52bdcf9613c62164c6744",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/MobileAuthorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/EmployeeCode"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    },
+                    {
+                        "name": "course",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/academy/courses/{course}/enrol": {
+            "post": {
+                "tags": [
+                    "Mobile"
+                ],
+                "summary": "📱 [MOBILE · S-03→S-04] Enrol into a cohort",
+                "description": "📱 **MOBILE** · Screens **S-03 → S-04 — Enrolment confirmation** · Audience: Employee/Learner mobile app · First-come-first-served enrolment race; row-locks the cohort + checks capacity + deadline inside a transaction.",
+                "operationId": "d10dffee66d85aa154d325395f00bf4a",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/MobileAuthorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/EmployeeCode"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    },
+                    {
+                        "name": "course",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "cohort_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Enrolled"
+                    },
+                    "409": {
+                        "description": "Cohort full / closed / no cohort"
+                    }
+                }
+            }
+        },
+        "/mobile/attendance/mark": {
+            "post": {
+                "tags": [
+                    "Mobile"
+                ],
+                "summary": "📱 [MOBILE · S-06] Submit session passcode",
+                "description": "📱 **MOBILE** · Screen **S-06 — Mark Present** · Audience: Employee/Learner mobile app · Validates enrolment, open session window, passcode match, expiry, and duplicate prevention; writes a denormalized attendance row + audit log.",
+                "operationId": "7a58217cacadbdd4ece49990728d0190",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/MobileAuthorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/EmployeeCode"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "course_id",
+                                    "passcode"
+                                ],
+                                "properties": {
+                                    "course_id": {
+                                        "type": "integer"
+                                    },
+                                    "session_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "passcode": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Attendance recorded"
+                    },
+                    "403": {
+                        "description": "Not enrolled"
+                    },
+                    "409": {
+                        "description": "No open window / already marked"
+                    },
+                    "422": {
+                        "description": "Invalid or expired code"
+                    }
+                }
+            }
+        },
+        "/mobile/certificates/{compoundId}": {
+            "get": {
+                "tags": [
+                    "Mobile"
+                ],
+                "summary": "📱 [MOBILE · S-07] Single certificate detail",
+                "description": "📱 **MOBILE** · Screen **S-07 — Certificates · detail tap** · Audience: Employee/Learner mobile app · Looks up a derived certificate by its compound id (`exam:123` / `evaluation:456`).",
+                "operationId": "2a77fcfe6647374457e1191db16e0fc0",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/MobileAuthorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/EmployeeCode"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    },
+                    {
+                        "name": "compoundId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            }
+        },
+        "/mobile/certificates/{compoundId}/download": {
+            "get": {
+                "tags": [
+                    "Mobile"
+                ],
+                "summary": "📱 [MOBILE · S-07] Download certificate image",
+                "description": "📱 **MOBILE** · Screen **S-07 — Certificates · Download** · Audience: Employee/Learner mobile app · Returns the rendered base64 JPEG (same template used by the legacy web view).",
+                "operationId": "4918d37f0416754e5feca910c0fa3a73",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/MobileAuthorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/EmployeeCode"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    },
+                    {
+                        "name": "compoundId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            }
+        },
+        "/mobile/me": {
+            "get": {
+                "tags": [
+                    "Mobile"
+                ],
+                "summary": "📱 [MOBILE · Identity] Authenticated learner identity",
+                "description": "📱 **MOBILE** · Learner identity card · Audience: Employee/Learner mobile app · Returns the authenticated learner's HR-sourced identity (`machine_code`, name, department, job title, image) — used by the mobile app to render the profile header and as the cross-reference key for every audit row.",
+                "operationId": "e9f7e7c45f72c8aa8ed28d0a206089d4",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/MobileAuthorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/EmployeeCode"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/my-learning/overview": {
+            "get": {
+                "tags": [
+                    "Mobile"
+                ],
+                "summary": "📱 [MOBILE · S-05] My Learning overview composite",
+                "description": "📱 **MOBILE** · Screen **S-05 — Profile / My Learning** · Audience: Employee/Learner mobile app · Composite payload (counts + previews) for active courses, qualifications, and certificates.",
+                "operationId": "cd331ceb6732921811f4c0731cfa8076",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/MobileAuthorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/EmployeeCode"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/my-learning/active": {
+            "get": {
+                "tags": [
+                    "Mobile"
+                ],
+                "summary": "📱 [MOBILE · S-05] My active courses",
+                "description": "📱 **MOBILE** · Screen **S-05 — My Learning · Active Courses tab** · Audience: Employee/Learner mobile app · Paginated active enrolments with live progress / attendance counts and a Live-Now badge.",
+                "operationId": "62429adad1ec1d22d5f8266e4a2f744e",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/MobileAuthorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/EmployeeCode"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/my-learning/qualifications": {
+            "get": {
+                "tags": [
+                    "Mobile"
+                ],
+                "summary": "📱 [MOBILE · S-05] My qualifications progress",
+                "description": "📱 **MOBILE** · Screen **S-05 — My Learning · Qualifications tab** · Audience: Employee/Learner mobile app · Derived live from `job_title_qualification_skill` × `course_qualification_skills` × completion sources.",
+                "operationId": "3f13d55bf26f229eec4707fc8645a48a",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/MobileAuthorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/EmployeeCode"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/my-learning/courses/{course}/sessions": {
+            "get": {
+                "tags": [
+                    "Mobile"
+                ],
+                "summary": "📱 [MOBILE · S-05] Course attendance log",
+                "description": "📱 **MOBILE** · Screen **S-05 — My Learning · Sessions drilldown** · Audience: Employee/Learner mobile app · Returns one row per cohort session with an `attended` flag derived from the live attendances table.",
+                "operationId": "f83c01aa79a478e8eb18e4c1d8338bc6",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/MobileAuthorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/EmployeeCode"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    },
+                    {
+                        "name": "course",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/my-learning/certificates": {
+            "get": {
+                "tags": [
+                    "Mobile"
+                ],
+                "summary": "📱 [MOBILE · S-07] Certificates list",
+                "description": "📱 **MOBILE** · Screen **S-07 — Certificates** · Audience: Employee/Learner mobile app · Paginated, derived from final-exam pass + course-evaluation submission (no `user_certificates` table).",
+                "operationId": "0ded15bb740c4fed10252824ecd96e01",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/MobileAuthorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/EmployeeCode"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/my-learning/courses/{course}/rating": {
+            "post": {
+                "tags": [
+                    "Mobile"
+                ],
+                "summary": "📱 [MOBILE · S-05] Submit / update cohort rating",
+                "description": "📱 **MOBILE** · Screen **S-05 — Rating bottom sheet** · Audience: Employee/Learner mobile app · Settings-driven scale (`rating_min_value` / `rating_max_value`) + conditional comment requirement (`rating_comment_required_at_or_below`).",
+                "operationId": "c4ea31fb4830e55996fce74845b5dfa5",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/MobileAuthorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/EmployeeCode"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    },
+                    {
+                        "name": "course",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "rating"
+                                ],
+                                "properties": {
+                                    "rating": {
+                                        "type": "integer"
+                                    },
+                                    "comment": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
         "/webhooks/user/create-or-update": {
             "post": {
                 "tags": [
@@ -123,6 +663,91 @@
                         }
                     }
                 }
+            }
+        },
+        "/admin/course-sessions/{session}/passcode": {
+            "post": {
+                "tags": [
+                    "Admin - Session Passcode"
+                ],
+                "summary": "🛠️ [MOBILE-ADMIN] Issue / rotate passcode (drives S-06)",
+                "description": "🛠️ **MOBILE FLOW (admin support)** · Drives mobile **S-06 — Mark Present** · Audience: Instructors / admins · Generates a numeric passcode honoring `mobile_attendance.attendance_passcode_length` and `attendance_window_minutes`.",
+                "operationId": "4ef05634869b664bdf64f7e25ff82c63",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    },
+                    {
+                        "name": "session",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "expires_at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    },
+                                    "length": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Session Passcode"
+                ],
+                "summary": "🛠️ [MOBILE-ADMIN] Revoke session passcode (closes S-06 window)",
+                "description": "🛠️ **MOBILE FLOW (admin support)** · Drives mobile **S-06 — Mark Present** · Audience: Instructors / admins · Closes the attendance window early by nulling out the stored passcode + expiry.",
+                "operationId": "7e2791d42b66d73217500fd88c59d569",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    },
+                    {
+                        "name": "session",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
             }
         },
         "/admins": {
@@ -13335,6 +13960,26 @@
                     ]
                 }
             },
+            "EmployeeCode": {
+                "name": "Employee-Code",
+                "in": "header",
+                "description": "📱 MOBILE · HR-sourced learner identifier (`machine_code` on the users table). Every mobile API call must include this header — the server uses it to load the acting employee and execute the request on their behalf. Required on every `/mobile/*` endpoint.",
+                "required": true,
+                "schema": {
+                    "type": "string",
+                    "example": "EMP-001234"
+                }
+            },
+            "MobileAuthorization": {
+                "name": "X-Api-Token",
+                "in": "header",
+                "description": "📱 MOBILE · Shared static API token for the HR integration. Paste the value stored in the `settings` table under key `mobile_shared_bearer_token` (rotate via DB update + cache flush). The token is sent as a raw value — NO `Bearer ` prefix. The middleware also accepts `X-Mobile-Token` and the classic `Authorization: Bearer <token>` header for HR systems that prefer those conventions.",
+                "required": true,
+                "schema": {
+                    "type": "string",
+                    "example": "u3pBBsRbb3NGcSZsKQvuB8uZTjzJ8CKuUiMG9V6qYzo84Vxs0VIUopDTSVnj"
+                }
+            },
             "Page": {
                 "name": "page",
                 "in": "query",
@@ -13530,6 +14175,14 @@
         {
             "name": "Enums",
             "description": "Reference dropdown data — localized {value,label} option sets for every backend enum (course_type, cohort_status, module_content_type, etc.). Honors Accept-Language: en|ar. The frontend pulls these instead of hardcoding option lists."
+        },
+        {
+            "name": "Mobile",
+            "description": "📱 **MOBILE** · Employee/Learner mobile app (NAS-LMS Mobile) · Screens S-01 → S-07 · Academy discovery, enrolment, My Learning, qualifications, Mark Present (passcode), and certificates."
+        },
+        {
+            "name": "Admin - Session Passcode",
+            "description": "🛠️ **MOBILE-SUPPORT (admin-side)** · Issues / rotates / revokes the passcode that drives mobile **S-06 Mark Present**. Called by instructors / admins, not the mobile app."
         }
     ]
 }

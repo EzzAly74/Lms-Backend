@@ -94,6 +94,24 @@ use OpenApi\Annotations as OA;
  * )
  *
  * @OA\Parameter(
+ *     parameter="EmployeeCode",
+ *     name="Employee-Code",
+ *     in="header",
+ *     required=true,
+ *     description="📱 MOBILE · HR-sourced learner identifier (`machine_code` on the users table). Every mobile API call must include this header — the server uses it to load the acting employee and execute the request on their behalf. Required on every `/mobile/*` endpoint.",
+ *     @OA\Schema(type="string", example="EMP-001234")
+ * )
+ *
+ * @OA\Parameter(
+ *     parameter="MobileAuthorization",
+ *     name="X-Api-Token",
+ *     in="header",
+ *     required=true,
+ *     description="📱 MOBILE · Shared static API token for the HR integration. Paste the value stored in the `settings` table under key `mobile_shared_bearer_token` (rotate via DB update + cache flush). The token is sent as a raw value — NO `Bearer ` prefix. The middleware also accepts `X-Mobile-Token` and the classic `Authorization: Bearer <token>` header for HR systems that prefer those conventions.",
+ *     @OA\Schema(type="string", example="u3pBBsRbb3NGcSZsKQvuB8uZTjzJ8CKuUiMG9V6qYzo84Vxs0VIUopDTSVnj")
+ * )
+ *
+ * @OA\Parameter(
  *     parameter="Page",
  *     name="page",
  *     in="query",

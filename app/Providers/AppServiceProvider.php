@@ -32,6 +32,17 @@ use App\Repositories\Contracts\TestimonialRepositoryInterface;
 use App\Repositories\Contracts\UserEnrollmentRepositoryInterface;
 use App\Repositories\Contracts\UserProgressRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
+// Mobile (NAS-LMS Mobile) repository contracts ────────────────────────
+use App\Repositories\Contracts\Mobile\AcademyRepositoryInterface;
+use App\Repositories\Contracts\Mobile\MobileAttendanceRepositoryInterface;
+use App\Repositories\Contracts\Mobile\MobileCertificateRepositoryInterface;
+use App\Repositories\Contracts\Mobile\MobileEnrolmentRepositoryInterface;
+use App\Repositories\Contracts\Mobile\MyLearningRepositoryInterface;
+use App\Repositories\Eloquents\Mobile\AcademyRepository as MobileAcademyRepository;
+use App\Repositories\Eloquents\Mobile\MobileAttendanceRepository;
+use App\Repositories\Eloquents\Mobile\MobileCertificateRepository;
+use App\Repositories\Eloquents\Mobile\MobileEnrolmentRepository;
+use App\Repositories\Eloquents\Mobile\MyLearningRepository;
 use App\Repositories\Eloquents\AboutRepository;
 use App\Repositories\Eloquents\JobTitleRepository;
 use App\Repositories\Eloquents\AdminRepository;
@@ -119,6 +130,17 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(AttendanceRepositoryInterface::class,          AttendanceRepository::class);
         $this->app->bind(QualificationSkillRepositoryInterface::class,  QualificationSkillRepository::class);
         $this->app->bind(JobTitleRepositoryInterface::class,            JobTitleRepository::class);
+
+        // ─── Mobile (NAS-LMS Mobile, S-01 → S-07) ─────────────────────
+        // Bind every mobile repository contract to its Eloquent
+        // implementation. The mobile services / controllers depend on
+        // these contracts only — the concrete classes never leak past
+        // the container.
+        $this->app->bind(AcademyRepositoryInterface::class,             MobileAcademyRepository::class);
+        $this->app->bind(MyLearningRepositoryInterface::class,          MyLearningRepository::class);
+        $this->app->bind(MobileAttendanceRepositoryInterface::class,    MobileAttendanceRepository::class);
+        $this->app->bind(MobileEnrolmentRepositoryInterface::class,     MobileEnrolmentRepository::class);
+        $this->app->bind(MobileCertificateRepositoryInterface::class,   MobileCertificateRepository::class);
     }
 
     public function boot(): void

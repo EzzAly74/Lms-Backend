@@ -63,6 +63,27 @@ use OpenApi\Annotations as OA;
  * @OA\Tag(name="My",                    description="User-facing aggregate endpoints under /my/*")
  * @OA\Tag(name="Webhooks",              description="Inbound webhooks (HR system -> LMS)")
  * @OA\Tag(name="Enums",                 description="Reference dropdown data — localized {value,label} option sets for every backend enum (course_type, cohort_status, module_content_type, etc.). Honors Accept-Language: en|ar. The frontend pulls these instead of hardcoding option lists.")
+ *
+ * --- 📱 MOBILE (Employee/Learner mobile app) ---
+ * Every operation under the single `Mobile` tag is part of the
+ * NAS-LMS Mobile contract (Employee/Learner mobile app, screens S-01 → S-07).
+ * Each operation summary is prefixed with `📱 [MOBILE · S-XX]` so individual
+ * screens stay readable inside the collapsed sidebar group, and the
+ * description carries a `📱 MOBILE · Screen S-XX` tombstone for any
+ * Swagger UI / Redoc / generated client.
+ *
+ * The Admin → Session Passcode endpoints are NOT grouped here — they are
+ * the instructor-side passcode lifecycle that drives mobile S-06 but are
+ * called by admins, so they stay under their own admin tag.
+ *
+ * @OA\Tag(
+ *     name="Mobile",
+ *     description="📱 **MOBILE** · Employee/Learner mobile app (NAS-LMS Mobile) · Screens S-01 → S-07 · Academy discovery, enrolment, My Learning, qualifications, Mark Present (passcode), and certificates."
+ * )
+ * @OA\Tag(
+ *     name="Admin - Session Passcode",
+ *     description="🛠️ **MOBILE-SUPPORT (admin-side)** · Issues / rotates / revokes the passcode that drives mobile **S-06 Mark Present**. Called by instructors / admins, not the mobile app."
+ * )
  */
 class Info
 {

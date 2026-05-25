@@ -3,10 +3,12 @@
 use App\Http\Middleware\AdminLogMiddleware;
 use App\Http\Middleware\ApiProtectMiddleware;
 use App\Http\Middleware\AuthenticationMiddleware;
+use App\Http\Middleware\ResolveMobileEmployeeMiddleware;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\SwitchLanguageMiddleware;
 use App\Http\Middleware\TrustApiMiddleware;
+use App\Http\Middleware\VerifyMobileSharedTokenMiddleware;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -83,6 +85,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'switch-language'    => SwitchLanguageMiddleware::class,
             'language'           => SetLocale::class,
             'trust'              => TrustApiMiddleware::class,
+            // 📱 Mobile API (S2S, HR integration) — shared bearer token
+            // gate + employee resolver. Used in pairs:
+            // ->middleware(['mobile.token', 'mobile.employee'])
+            'mobile.token'       => VerifyMobileSharedTokenMiddleware::class,
+            'mobile.employee'    => ResolveMobileEmployeeMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
