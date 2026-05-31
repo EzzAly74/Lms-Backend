@@ -67,6 +67,32 @@
                 }
             }
         },
+        "/mobile/academy/scopes": {
+            "get": {
+                "tags": [
+                    "Mobile"
+                ],
+                "summary": "📱 [MOBILE · S-02] Scope chips (All / Special / General)",
+                "description": "📱 **MOBILE** · Screen **S-02 — Course list** · Audience: Employee/Learner mobile app · Returns the three fixed filter chips with per-scope availability counts. **Special** = courses tied to THIS employee's job-title qualifications. **General** = courses open to anyone (`for_public`).",
+                "operationId": "fc12f0e85a9620544772c4ad6b4cfac9",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/MobileAuthorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/EmployeeCode"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AcceptLanguage"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
         "/mobile/academy/courses": {
             "get": {
                 "tags": [
@@ -104,6 +130,19 @@
                         "in": "query",
                         "schema": {
                             "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "scope",
+                        "in": "query",
+                        "description": "Filter chip: all | special | general",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "all",
+                                "special",
+                                "general"
+                            ]
                         }
                     }
                 ],
