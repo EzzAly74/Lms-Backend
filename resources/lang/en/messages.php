@@ -28,6 +28,7 @@ return [
     'form_already_submitted'  => 'You have already submitted this form.',
     'attendance_complete'     => 'You have already attended all sessions for this course.',
     'attendance_recorded'     => 'Attendance recorded successfully.',
+    'rate_added'              => 'Thanks! Your feedback has been recorded.',
     'validation_failed'       => 'The given data was invalid.',
     'conflict'                => 'A conflict occurred with the current state of the resource.',
     'course_not_enrolled'     => 'You are not enrolled in this course.',
@@ -43,6 +44,10 @@ return [
     'mobile' => [
         'academy_summary'             => 'Academy summary retrieved.',
         'academy_categories'          => 'Academy categories retrieved.',
+        'academy_scopes'              => 'Academy scopes retrieved.',
+        'scope_all'                   => 'All',
+        'scope_special'               => 'Special Courses',
+        'scope_general'               => 'General Courses',
         'academy_courses'             => 'Academy courses retrieved.',
         'academy_course_detail'       => 'Course detail retrieved.',
         'academy_course_unavailable'  => 'This course is no longer available. The cohort may have filled up or enrolment may have closed.',

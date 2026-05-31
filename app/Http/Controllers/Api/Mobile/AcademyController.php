@@ -9,6 +9,7 @@ use App\Http\Resources\Mobile\AcademyCategoryChipResource;
 use App\Http\Resources\Mobile\AcademyCourseCardResource;
 use App\Http\Resources\Mobile\AcademyCourseDetailResource;
 use App\Http\Resources\Mobile\AcademyEntrySummaryResource;
+use App\Http\Resources\Mobile\AcademyScopeChipResource;
 use App\Http\Resources\Mobile\EnrolmentConfirmationResource;
 use App\Models\Course;
 use App\Services\Mobile\AcademyService;
@@ -82,6 +83,28 @@ class AcademyController extends MobileBaseController
 
     /**
      * @OA\Get(
+     *     path="/mobile/academy/scopes",
+     *     tags={"Mobile"},
+     *     summary="📱 [MOBILE · S-02] Scope chips (All / Special / General)",
+     *     description="📱 **MOBILE** · Screen **S-02 — Course list** · Audience: Employee/Learner mobile app · Returns the three fixed filter chips with per-scope availability counts. **Special** = courses tied to THIS employee's job-title qualifications. **General** = courses open to anyone (`for_public`).",
+     *     @OA\Parameter(ref="#/components/parameters/MobileAuthorization"),
+     *     @OA\Parameter(ref="#/components/parameters/EmployeeCode"),
+     *     @OA\Parameter(ref="#/components/parameters/AcceptLanguage"),
+     *     @OA\Response(response=200, description="OK")
+     * )
+     */
+    public function scopes(Request $request): JsonResponse
+    {
+        $chips = $this->academy->scopeChipsFor($request->user(), app()->getLocale());
+
+        return $this->success(
+            __('messages.mobile.academy_scopes'),
+            AcademyScopeChipResource::collection($chips),
+        );
+    }
+
+    /**
+     * @OA\Get(
      *     path="/mobile/academy/courses",
      *     tags={"Mobile"},
      *     summary="📱 [MOBILE · S-02] Available courses list",
@@ -92,6 +115,7 @@ class AcademyController extends MobileBaseController
      *     @OA\Parameter(name="category_id", in="query", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="search",      in="query", @OA\Schema(type="string")),
      *     @OA\Parameter(name="per_page",    in="query", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="scope",       in="query", description="Filter chip: all | special | general", @OA\Schema(type="string", enum={"all","special","general"})),
      *     @OA\Response(response=200, description="OK")
      * )
      */
@@ -102,6 +126,7 @@ class AcademyController extends MobileBaseController
             categoryId: $request->integer('category_id') ?: null,
             search: $request->string('search')->toString() ?: null,
             perPage: $request->integer('per_page') ?: null,
+            scope: $request->string('scope')->toString() ?: null,
         );
 
         return $this->paginated(

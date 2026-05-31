@@ -38,8 +38,17 @@ interface AcademyRepositoryInterface
     public function categoriesWithAvailableCount(User $user, Carbon $now, int $defaultCloseOffsetDays): Collection;
 
     /**
+     * Per-scope availability counts (`all` / `special` / `general`) for
+     * the S-02 filter chips.
+     *
+     * @return array{all: int, special: int, general: int}
+     */
+    public function scopeCounts(User $user, Carbon $now, int $defaultCloseOffsetDays): array;
+
+    /**
      * Paginated list of courses available to the user, optionally
-     * filtered by category and/or free-text search.
+     * filtered by category, free-text search and/or scope
+     * (`all` / `special` / `general`).
      *
      * @return LengthAwarePaginator<Course>
      */
@@ -50,6 +59,7 @@ interface AcademyRepositoryInterface
         int     $perPage,
         ?int    $categoryId,
         ?string $search,
+        ?string $scope = null,
     ): LengthAwarePaginator;
 
     /**

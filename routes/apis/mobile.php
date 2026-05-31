@@ -54,6 +54,7 @@ Route::middleware(['mobile.token', 'mobile.employee'])
         Route::prefix('academy')->group(function () {
             Route::get('summary',                            [AcademyController::class, 'summary']);
             Route::get('categories',                         [AcademyController::class, 'categories']);
+            Route::get('scopes',                             [AcademyController::class, 'scopes']);
             Route::get('courses',                            [AcademyController::class, 'courses']);
             Route::get('courses/{course}',                   [AcademyController::class, 'show'])
                 ->whereNumber('course');

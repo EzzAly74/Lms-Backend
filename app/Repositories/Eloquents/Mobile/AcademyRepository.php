@@ -47,6 +47,36 @@ final class AcademyRepository implements AcademyRepositoryInterface
         return $this->baseAvailableQuery($user, $now, $defaultCloseOffsetDays)->count();
     }
 
+    /**
+     * Per-scope availability counts that feed the S-02 chips:
+     *   - all     → every joinable course for this user
+     *   - special → joinable courses whose qualification skills overlap
+     *               the employee's job-title required skills
+     *   - general → joinable courses flagged `for_public`
+     *
+     * Each count reuses the exact same "available for this user"
+     * predicate as the paginated list, so the badge numbers always
+     * agree with what the list actually renders.
+     *
+     * @return array{all: int, special: int, general: int}
+     */
+    public function scopeCounts(User $user, Carbon $now, int $defaultCloseOffsetDays): array
+    {
+        $skillIds = $this->employeeQualificationSkillIds($user);
+
+        $special = $this->baseAvailableQuery($user, $now, $defaultCloseOffsetDays);
+        $this->applyScope($special, 'special', $skillIds);
+
+        $general = $this->baseAvailableQuery($user, $now, $defaultCloseOffsetDays);
+        $this->applyScope($general, 'general', $skillIds);
+
+        return [
+            'all'     => $this->baseAvailableQuery($user, $now, $defaultCloseOffsetDays)->count(),
+            'special' => $special->count(),
+            'general' => $general->count(),
+        ];
+    }
+
     public function categoriesWithAvailableCount(User $user, Carbon $now, int $defaultCloseOffsetDays): EloquentCollection
     {
         // We want every category that owns at least one available
@@ -79,10 +109,14 @@ final class AcademyRepository implements AcademyRepositoryInterface
         int     $perPage,
         ?int    $categoryId,
         ?string $search,
+        ?string $scope = null,
     ): LengthAwarePaginator {
         $locale = app()->getLocale();
 
-        return $this->baseAvailableQuery($user, $now, $defaultCloseOffsetDays)
+        $query = $this->baseAvailableQuery($user, $now, $defaultCloseOffsetDays);
+        $this->applyScope($query, $scope, $this->employeeQualificationSkillIds($user));
+
+        return $query
             ->select([
                 'courses.id',
                 'courses.title',
@@ -200,6 +234,77 @@ final class AcademyRepository implements AcademyRepositoryInterface
     // ────────────────────────────────────────────────────────────
     // Internals
     // ────────────────────────────────────────────────────────────
+
+    /**
+     * Narrow an "available courses" query to a single S-02 scope.
+     *
+     * Special and General form a TRUE PARTITION of the available set, so
+     * the chip badges always reconcile: `all = special + general`.
+     *
+     *   - `special`  → course shares at least one qualification skill
+     *                  with the employee's job-title required skills.
+     *                  When the employee has no qualifications nothing is
+     *                  special (`1 = 0`).
+     *   - `general`  → every available course that is NOT special (the
+     *                  exact complement). When the employee has no
+     *                  qualifications, all available courses are general.
+     *   - anything else (incl. `all`/null) → no extra predicate.
+     *
+     * @param  Builder|QueryBuilder  $q
+     * @param  array<int, int>       $skillIds
+     * @return Builder|QueryBuilder
+     */
+    private function applyScope(Builder|QueryBuilder $q, ?string $scope, array $skillIds): Builder|QueryBuilder
+    {
+        if ($scope === 'special') {
+            if (empty($skillIds)) {
+                return $q->whereRaw('1 = 0');
+            }
+
+            return $q->whereExists(function ($sub) use ($skillIds) {
+                $sub->from('course_qualification_skills')
+                    ->whereColumn('course_qualification_skills.course_id', 'courses.id')
+                    ->whereIn('course_qualification_skills.qualification_skill_id', $skillIds);
+            });
+        }
+
+        if ($scope === 'general') {
+            // Complement of `special`: anything not tied to the employee's
+            // qualification skills. With no skills, every course is general.
+            if (empty($skillIds)) {
+                return $q;
+            }
+
+            return $q->whereNotExists(function ($sub) use ($skillIds) {
+                $sub->from('course_qualification_skills')
+                    ->whereColumn('course_qualification_skills.course_id', 'courses.id')
+                    ->whereIn('course_qualification_skills.qualification_skill_id', $skillIds);
+            });
+        }
+
+        return $q;
+    }
+
+    /**
+     * The qualification-skill IDs an employee is expected to hold,
+     * derived from their job title (`job_title_qualification_skill`).
+     * Returns an empty array when the employee has no job title — which
+     * makes the "Special" scope correctly resolve to zero results.
+     *
+     * @return array<int, int>
+     */
+    private function employeeQualificationSkillIds(User $user): array
+    {
+        if (empty($user->job_title_id)) {
+            return [];
+        }
+
+        return DB::table('job_title_qualification_skill')
+            ->where('job_title_id', $user->job_title_id)
+            ->pluck('qualification_skill_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+    }
 
     private function baseAvailableQuery(User $user, Carbon $now, int $defaultCloseOffsetDays): Builder
     {

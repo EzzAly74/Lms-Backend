@@ -28,6 +28,7 @@ return [
     'form_already_submitted'  => 'لقد أرسلت هذا النموذج مسبقًا.',
     'attendance_complete'     => 'لقد حضرت جميع جلسات هذه الدورة مسبقًا.',
     'attendance_recorded'     => 'تم تسجيل الحضور بنجاح.',
+    'rate_added'              => 'شكرًا لك! تم تسجيل تقييمك.',
     'validation_failed'       => 'البيانات المدخلة غير صالحة.',
     'conflict'                => 'حدث تعارض مع الحالة الحالية للمورد.',
     'course_not_enrolled'     => 'أنت غير مسجل في هذه الدورة.',
@@ -43,6 +44,10 @@ return [
     'mobile' => [
         'academy_summary'             => 'تم استرجاع ملخّص الأكاديمية.',
         'academy_categories'          => 'تم استرجاع تصنيفات الأكاديمية.',
+        'academy_scopes'              => 'تم استرجاع تبويبات الأكاديمية.',
+        'scope_all'                   => 'الكل',
+        'scope_special'               => 'دورات تخصصية',
+        'scope_general'               => 'دورات عامة',
         'academy_courses'             => 'تم استرجاع دورات الأكاديمية.',
         'academy_course_detail'       => 'تم استرجاع تفاصيل الدورة.',
         'academy_course_unavailable'  => 'هذه الدورة لم تعد متاحة. ربما اكتملت الدفعة أو أُغلق التسجيل.',

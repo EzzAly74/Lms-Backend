@@ -83,6 +83,39 @@ final class AcademyService
     }
 
     /**
+     * S-02 scope chips — fixed `All` / `Special` / `General` filters.
+     *
+     *   - Special → courses tied to the employee's job-title
+     *     qualification skills.
+     *   - General → every other available course (the complement of
+     *     Special), so `all = special + general` always holds.
+     *
+     * Counts reuse the exact same availability predicate as the list,
+     * so the badges always agree with what the list renders.
+     *
+     * @return Collection<int, array{key: string, label: string, count: int, is_all: bool}>
+     */
+    public function scopeChipsFor(User $user, string $locale): Collection
+    {
+        $counts = $this->repository->scopeCounts(
+            $user,
+            now(),
+            $this->settings->academyDefaultCloseOffsetDays(),
+        );
+
+        return collect([
+            ['key' => 'all',     'count' => (int) $counts['all'],     'is_all' => true],
+            ['key' => 'special', 'count' => (int) $counts['special'], 'is_all' => false],
+            ['key' => 'general', 'count' => (int) $counts['general'], 'is_all' => false],
+        ])->map(fn (array $chip) => [
+            'key'    => $chip['key'],
+            'label'  => __('messages.mobile.scope_' . $chip['key'], [], $locale),
+            'count'  => $chip['count'],
+            'is_all' => $chip['is_all'],
+        ])->values();
+    }
+
+    /**
      * S-02 paginated list.
      */
     public function listAvailable(
@@ -90,6 +123,7 @@ final class AcademyService
         ?int    $categoryId,
         ?string $search,
         ?int    $perPage,
+        ?string $scope = null,
     ): LengthAwarePaginator {
         $effectivePerPage = $perPage !== null && $perPage > 0
             ? min($perPage, $this->settings->academyPerPage() * 5)
@@ -107,7 +141,17 @@ final class AcademyService
             perPage: $effectivePerPage,
             categoryId: $categoryId,
             search: $cleanSearch,
+            scope: $this->normaliseScope($scope),
         );
+    }
+
+    /**
+     * Whitelist the scope so a stray query string can never reach the
+     * repository. Unknown values collapse to `all`.
+     */
+    private function normaliseScope(?string $scope): string
+    {
+        return in_array($scope, ['special', 'general'], true) ? $scope : 'all';
     }
 
     /**
