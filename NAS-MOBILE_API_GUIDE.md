@@ -8,6 +8,8 @@ You must think and behave like a real senior technical lead, not a code generato
 
 Dont Touch MVC Logic.
 
+# Your Single Source of Truth is figma links below
+
 ---
 
 # PROJECT CONTEXT
@@ -127,10 +129,10 @@ You MUST follow:
 
 ```json
 {
-  "success": true,
-  "message": "Operation completed successfully",
-  "data": {},
-  "meta": {}
+    "success": true,
+    "message": "Operation completed successfully",
+    "data": {},
+    "meta": {}
 }
 ```
 
@@ -161,3 +163,5 @@ https://www.figma.com/design/JnNkT9eeYmRiDOuapW4RKf/LMS?node-id=543-41225&m=dev
 https://www.figma.com/design/JnNkT9eeYmRiDOuapW4RKf/LMS?node-id=543-41430&m=dev
 https://www.figma.com/design/JnNkT9eeYmRiDOuapW4RKf/LMS?node-id=543-41637&m=dev
 https://www.figma.com/design/JnNkT9eeYmRiDOuapW4RKf/LMS?node-id=543-41844&m=dev
+
+Shared API Token For Mobile : 0ecCah0hLg9Ju8921KBViCgYlBEGdSKBZZl4xcTGfCUFh9WVSag2gKuz3zva

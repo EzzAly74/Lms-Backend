@@ -33,6 +33,12 @@ return [
     'course_not_enrolled'     => 'You are not enrolled in this course.',
     'course_not_evaluatable'  => 'This course is not available for evaluation.',
 
+    // Dashboard — Session Passcode widget
+    'passcode' => [
+        'generated'       => 'Passcode generated.',
+        'no_live_session' => 'No live session right now. A passcode can only be generated while a session is in progress.',
+    ],
+
     // Mobile — Academy & Enrolment (S-01 → S-04)
     'mobile' => [
         'academy_summary'             => 'Academy summary retrieved.',

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\apis\AdminController;
 use App\Http\Controllers\apis\DashboardController;
+use App\Http\Controllers\apis\DashboardPasscodeController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -14,6 +15,11 @@ Route::middleware(['auth.user', 'role:Admin'])->group(function () {
 
     // Dashboard statistics
     Route::get('dashboard', [DashboardController::class, 'index']);
+
+    // Dashboard passcode widget — read current live-session state and
+    // generate a passcode for it in one tap (drives mobile S-06).
+    Route::get('dashboard/passcode',  [DashboardPasscodeController::class, 'current']);
+    Route::post('dashboard/passcode', [DashboardPasscodeController::class, 'generate']);
 
     // Admin CRUD
     Route::get('admins',           [AdminController::class, 'index']);

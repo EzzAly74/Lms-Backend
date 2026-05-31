@@ -31,8 +31,10 @@ class PlatformConfigSeeder extends Seeder
             ['key' => 'platform_name',     'value' => 'NAS LMS', 'type' => 'text',     'label' => 'Platform Name',     'module' => $module],
             ['key' => 'default_language',  'value' => 'en',      'type' => 'text',     'label' => 'Default Language',  'module' => $module],
 
-            // ── Enrolment & Learning ──────────────────────────────────
-            ['key' => 'default_cohort_size','value' => '30',     'type' => 'number',   'label' => 'Default Cohort Size','module' => $module],
+            // ── Enrolment & Attendance ────────────────────────────────
+            ['key' => 'default_cohort_size',     'value' => '30', 'type' => 'number',  'label' => 'Default Cohort Size',     'module' => $module],
+            ['key' => 'course_attendance_enabled','value' => '1', 'type' => 'boolean', 'label' => 'Course Attendance',       'module' => $module],
+            ['key' => 'passcode_reset_seconds',  'value' => '30', 'type' => 'number',  'label' => 'Passcode Reset (seconds)','module' => $module],
 
             // ── Grading & Certificates ────────────────────────────────
             ['key' => 'course_ratings_enabled',     'value' => '1',  'type' => 'boolean', 'label' => 'Course Ratings',            'module' => $module],

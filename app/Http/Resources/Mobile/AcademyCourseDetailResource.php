@@ -46,7 +46,7 @@ class AcademyCourseDetailResource extends JsonResource
             'image'           => $this->absoluteUrl($course->image),
             'hours'           => (int) ($course->hours ?? 0),
             'has_certificate' => (bool) $course->certificate,
-            'allow_attendance'=> (bool) ($course->allow_attendance ?? false),
+            'allow_attendance'=> (bool) ($course->allow_attendances ?? false),
 
             'category'        => $course->category ? [
                 'id'   => (int) $course->category->id,
