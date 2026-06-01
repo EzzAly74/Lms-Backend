@@ -13,24 +13,6 @@ class CategoryRequest extends FormRequest
 
     public function rules(): array
     {
-        /**
-         * `_method=PUT` is the canonical pattern Laravel uses to map a
-         * multipart `POST` to an `update()` action — required because PHP
-         * cannot parse `multipart/form-data` bodies on non-POST verbs.
-         * We treat anything other than a real `POST` (or a spoofed PUT/
-         * PATCH via `_method`) as an update, so the logo stays optional
-         * when only metadata changes.
-         */
-        $isCreate = $this->isMethod('post') && !in_array(
-            strtoupper((string) $this->input('_method', '')),
-            ['PUT', 'PATCH'],
-            true,
-        );
-
-        $logoRule = $isCreate
-            ? 'required|image|mimes:png,jpg,jpeg,webp,svg|max:2048'
-            : 'nullable|image|mimes:png,jpg,jpeg,webp,svg|max:2048';
-
         return [
             /**
              * `Category::$translatable = ['name']` (Spatie) — admins submit
@@ -41,7 +23,12 @@ class CategoryRequest extends FormRequest
             'name.ar' => 'required|string|max:255',
             'name.en' => 'nullable|string|max:255',
             'active'  => 'nullable|boolean',
-            'logo'    => $logoRule,
+            /**
+             * Categories no longer carry an image (removed per design review).
+             * The rule stays `nullable` purely so any stray legacy multipart
+             * submission still validates instead of 422-ing.
+             */
+            'logo'    => 'nullable|image|mimes:png,jpg,jpeg,webp,svg|max:2048',
         ];
     }
 }

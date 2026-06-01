@@ -141,6 +141,26 @@ class AdminUserController extends ApiController
         return $this->success(__('messages.updated'), new AdminUserDetailResource($row));
     }
 
+    /**
+     * PATCH /api/v1/admin/users/{source}/{id}/reactivate
+     *
+     * Reverses a soft-deactivation by setting `status = 'active'`.
+     */
+    public function reactivate(string $source, int $id): JsonResponse
+    {
+        $this->guardSource($source);
+
+        try {
+            $row = $this->service->reactivate($source, $id);
+        } catch (ModelNotFoundException) {
+            return $this->notFound();
+        } catch (\InvalidArgumentException) {
+            return $this->error(__('messages.not_found'), 404);
+        }
+
+        return $this->success(__('messages.updated'), new AdminUserDetailResource($row));
+    }
+
     /* ------------------------------------------------------------------ *
      |  HELPERS                                                           |
      * ------------------------------------------------------------------ */

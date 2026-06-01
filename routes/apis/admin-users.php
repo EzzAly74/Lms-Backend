@@ -43,4 +43,9 @@ Route::middleware(['auth.user', 'role:Admin'])->prefix('admin')->group(function 
     Route::delete('users/{source}/{id}', [AdminUserController::class, 'destroy'])
         ->whereIn('source', ['user', 'instructor', 'admin'])
         ->whereNumber('id');
+
+    // Reverse a soft-deactivation (status -> active).
+    Route::patch('users/{source}/{id}/reactivate', [AdminUserController::class, 'reactivate'])
+        ->whereIn('source', ['user', 'instructor', 'admin'])
+        ->whereNumber('id');
 });

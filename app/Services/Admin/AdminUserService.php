@@ -586,6 +586,22 @@ class AdminUserService
         return $this->show($source, $id);
     }
 
+    /**
+     * Reverse of {@see deactivate()} — flips a previously deactivated row
+     * back to `status = 'active'`. Used by the "Reactivate" row action.
+     */
+    public function reactivate(string $source, int $id): \stdClass
+    {
+        $this->assertSource($source);
+
+        $table = $this->tableFor($source);
+        if (Schema::hasColumn($table, 'status')) {
+            DB::table($table)->where('id', $id)->update(['status' => 'active']);
+        }
+
+        return $this->show($source, $id);
+    }
+
     /* ------------------------------------------------------------------ *
      |  INTERNAL — Unified query builder                                  |
      * ------------------------------------------------------------------ */
