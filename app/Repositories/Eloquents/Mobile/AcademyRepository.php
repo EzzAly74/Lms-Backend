@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace App\Repositories\Eloquents\Mobile;
 
-use App\Models\Category;
 use App\Models\Course;
 use App\Models\CourseSection;
 use App\Models\User;
 use App\Repositories\Contracts\Mobile\AcademyRepositoryInterface;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
@@ -38,7 +36,6 @@ final class AcademyRepository implements AcademyRepositoryInterface
 {
     public function __construct(
         private readonly Course $course,
-        private readonly Category $category,
         private readonly CourseSection $section,
     ) {}
 
@@ -75,31 +72,6 @@ final class AcademyRepository implements AcademyRepositoryInterface
             'special' => $special->count(),
             'general' => $general->count(),
         ];
-    }
-
-    public function categoriesWithAvailableCount(User $user, Carbon $now, int $defaultCloseOffsetDays): EloquentCollection
-    {
-        // We want every category that owns at least one available
-        // course. We count subquery rows per category so the count
-        // matches what `paginateAvailable` would yield for that filter.
-        $today  = $now->toDateString();
-        $offset = max(0, $defaultCloseOffsetDays);
-
-        return $this->category->newQuery()
-            ->select(['categories.id', 'categories.name'])
-            ->selectSub(
-                $this->buildAvailableCountSubquery($user, $today, $offset),
-                'available_count',
-            )
-            ->whereExists(function ($q) use ($user, $today, $offset) {
-                $q->from('courses')
-                  ->whereColumn('courses.category_id', 'categories.id')
-                  ->where(function ($q2) use ($user, $today, $offset) {
-                      $this->applyAvailableExists($q2, $user, $today, $offset);
-                  });
-            })
-            ->orderBy('categories.id')
-            ->get();
     }
 
     public function paginateAvailable(
@@ -319,8 +291,8 @@ final class AcademyRepository implements AcademyRepositoryInterface
 
     /**
      * Add the "joinable cohort exists for this user" predicate.
-     * Extracted so countAvailableForUser, paginateAvailable, and
-     * categoriesWithAvailableCount stay in lock-step.
+     * Extracted so countAvailableForUser and paginateAvailable stay in
+     * lock-step.
      *
      * The `$q` builder may be either an Eloquent Builder (when invoked
      * from `baseAvailableQuery`, where the outer query is a model
@@ -368,51 +340,4 @@ final class AcademyRepository implements AcademyRepositoryInterface
         });
     }
 
-    /**
-     * Build a "courses available for this user under this category"
-     * count subquery — used by the chip badges on S-02.
-     *
-     * @return \Closure(\Illuminate\Database\Query\Builder): \Illuminate\Database\Query\Builder
-     */
-    private function buildAvailableCountSubquery(User $user, string $today, int $offset): \Closure
-    {
-        return function ($q) use ($user, $today, $offset) {
-            $q->selectRaw('COUNT(*)')
-              ->from('courses')
-              ->whereColumn('courses.category_id', 'categories.id')
-              ->whereExists(function ($sub) use ($user, $today, $offset) {
-                  $sub->from('course_sections')
-                      ->whereColumn('course_sections.course_id', 'courses.id')
-                      ->where(function ($q2) {
-                          $q2->whereNull('course_sections.status')
-                             ->orWhere('course_sections.status', '!=', 'inactive');
-                      })
-                      ->whereNotNull('course_sections.start_date')
-                      ->whereDate('course_sections.start_date', '>=', $today)
-                      ->where(function ($q2) use ($today, $offset) {
-                          $q2->where(function ($q3) use ($today) {
-                              $q3->whereNotNull('course_sections.enrolment_closes_at')
-                                 ->whereDate('course_sections.enrolment_closes_at', '>=', $today);
-                          })->orWhere(function ($q3) use ($today, $offset) {
-                              $q3->whereNull('course_sections.enrolment_closes_at')
-                                 ->whereRaw(
-                                     'DATE_SUB(course_sections.start_date, INTERVAL ? DAY) >= ?',
-                                     [$offset, $today],
-                                 );
-                          });
-                      })
-                      ->where(function ($q2) {
-                          $q2->whereNull('course_sections.capacity')
-                             ->orWhereRaw(
-                                 '(SELECT COUNT(*) FROM users_courses uc WHERE uc.group_id = course_sections.id) < course_sections.capacity',
-                             );
-                      })
-                      ->whereNotExists(function ($q2) use ($user) {
-                          $q2->from('users_courses')
-                             ->whereColumn('users_courses.group_id', 'course_sections.id')
-                             ->where('users_courses.user_id', $user->id);
-                      });
-              });
-        };
-    }
 }

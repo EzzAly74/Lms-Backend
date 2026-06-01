@@ -5,17 +5,17 @@ namespace Tests\Feature\Api\Mobile;
 use App\Models\Course;
 use App\Models\CourseExam;
 use App\Models\CourseSection;
-use App\Models\User;
 use App\Models\UserExam;
+use App\Services\CertificateService;
 
 /**
  * S-07 — certificate detail + download. The list itself is covered in
  * MyLearningApiTest; here we exercise the per-certificate lookup by its
- * compound id (`exam:{id}` / `evaluation:{id}`).
+ * own integer id (the compound-id pattern has been removed).
  */
 class CertificateApiTest extends MobileTestCase
 {
-    /** Build a passed-final-exam certificate and return [user, compoundId]. */
+    /** Build a passed-final-exam certificate and return [user, certificateId]. */
     private function certificateFor(): array
     {
         $user   = $this->employee(['name' => 'Cert Holder']);
@@ -28,64 +28,60 @@ class CertificateApiTest extends MobileTestCase
             'course_id'  => $course->id,
             'section_id' => $cohort->id,
         ]);
-        UserExam::factory()->create([
+        $userExam = UserExam::factory()->create([
             'user_id'   => $user->id,
             'course_id' => $course->id,
             'exam_id'   => $exam->id,
             'status'    => 'success',
         ]);
 
-        // Resolve the real compound id from the list endpoint (robust to
-        // whatever internal id the derivation uses).
-        $list = $this->withHeaders($this->headersFor($user))
-                     ->getJson(self::BASE . '/mobile/my-learning/certificates');
-        $compoundId = $list->json('result.0.id');
+        $certificate = app(CertificateService::class)->issueFromExam($userExam);
 
-        return [$user, $compoundId];
+        return [$user, (int) $certificate->id];
     }
 
     public function test_certificate_detail_returns_payload(): void
     {
-        [$user, $compoundId] = $this->certificateFor();
+        [$user, $certificateId] = $this->certificateFor();
 
         $response = $this->withHeaders($this->headersFor($user))
-                         ->getJson(self::BASE . '/mobile/certificates/' . $compoundId);
+                         ->getJson(self::BASE . '/mobile/certificates/' . $certificateId);
 
         $this->assertSuccess($response);
-        $response->assertJsonPath('result.id', $compoundId)
-                 ->assertJsonStructure(['result' => ['id', 'type', 'course_id', 'course_title', 'issued_at']]);
+        $response->assertJsonPath('result.id', $certificateId)
+                 ->assertJsonStructure(['result' => ['id', 'uuid', 'certificate_number', 'status', 'course_id', 'course_title', 'issued_at']]);
     }
 
     public function test_certificate_download_returns_base64_image(): void
     {
-        [$user, $compoundId] = $this->certificateFor();
+        [$user, $certificateId] = $this->certificateFor();
 
         $response = $this->withHeaders($this->headersFor($user))
-                         ->getJson(self::BASE . '/mobile/certificates/' . $compoundId . '/download');
+                         ->getJson(self::BASE . '/mobile/certificates/' . $certificateId . '/download');
 
         $this->assertSuccess($response);
         $response->assertJsonPath('result.mime_type', 'image/jpeg')
-                 ->assertJsonStructure(['result' => ['id', 'course_id', 'course_title', 'image_base64', 'mime_type']]);
+                 ->assertJsonStructure(['result' => ['id', 'certificate_number', 'course_id', 'course_title', 'image_base64', 'mime_type']]);
         $this->assertNotEmpty($response->json('result.image_base64'));
     }
 
-    public function test_certificate_detail_404_for_unowned_certificate(): void
+    public function test_certificate_detail_404_for_unknown_certificate(): void
     {
         $user = $this->employee();
 
         $response = $this->withHeaders($this->headersFor($user))
-                         ->getJson(self::BASE . '/mobile/certificates/exam:999999');
+                         ->getJson(self::BASE . '/mobile/certificates/999999');
 
         $this->assertError($response, 404);
     }
 
     public function test_certificate_not_visible_to_other_learner(): void
     {
-        [, $compoundId] = $this->certificateFor();
+        [, $certificateId] = $this->certificateFor();
         $other = $this->employee();
 
         $response = $this->withHeaders($this->headersFor($other))
-                         ->getJson(self::BASE . '/mobile/certificates/' . $compoundId);
+                         ->getJson(self::BASE . '/mobile/certificates/' . $certificateId);
 
         $this->assertError($response, 404);
     }

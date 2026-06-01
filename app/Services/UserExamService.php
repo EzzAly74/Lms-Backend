@@ -11,6 +11,10 @@ use Illuminate\Database\Eloquent\Collection;
 
 class UserExamService
 {
+    public function __construct(
+        private readonly CertificateService $certificates,
+    ) {}
+
     public function hasAlreadySubmitted(int $userId, int $examId): bool
     {
         return UserExam::where('user_id', $userId)->where('exam_id', $examId)->exists();
@@ -63,6 +67,13 @@ class UserExamService
             'user_degree' => $userDegree,
             'status'      => $status,
         ]);
+
+        // Issue the first-class certificate the moment a final exam is
+        // passed on a certificate-bearing course. Idempotent + eligibility
+        // gated inside CertificateService.
+        if ($status === 'success') {
+            $this->certificates->issueFromExam($userExam);
+        }
 
         return $userExam->load(['exam:id,title,degree,is_final', 'course:id,title,certificate']);
     }

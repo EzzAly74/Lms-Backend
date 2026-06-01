@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Mobile;
 
 use App\Models\User;
+use App\Models\UserCertificate;
 use App\Repositories\Contracts\Mobile\MobileCertificateRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -40,8 +41,8 @@ final class MobileCertificateService
         );
     }
 
-    public function findById(User $user, string $compoundId, string $locale): ?array
+    public function findById(User $user, int $id, string $locale): ?UserCertificate
     {
-        return $this->repository->findById($user, $compoundId, $locale);
+        return $this->repository->findById($user, $id, $locale);
     }
 }

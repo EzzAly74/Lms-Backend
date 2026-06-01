@@ -4,33 +4,45 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Mobile;
 
+use App\Models\UserCertificate;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * S-07 certificate card. `id` is the *compound* "type:source_id"
- * identifier emitted by MobileCertificateRepository so the download
- * endpoint can route to the correct issuance source (exam vs.
- * evaluation) without leaking that detail to the client.
+ * S-07 certificate card.
  *
- * Every cert echoes the `learner` block — `machine_code` is the
- * canonical id printed on the certificate visual, and the mobile
- * client uses it to label the card ("Issued to <machine_code>").
+ * The client only ever sees the certificate's own identity — integer
+ * `id`, public `uuid`, and human `certificate_number`. The originating
+ * exam/evaluation (`source_type`/`source_id`) is NEVER exposed: the
+ * mobile app must not know how a certificate was earned.
+ *
+ * @mixin UserCertificate
  */
 class CertificateResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        $row = $this->resource;
+        /** @var UserCertificate $certificate */
+        $certificate = $this->resource;
+
+        $locale = app()->getLocale();
+        $title  = $certificate->localizedCourseTitle($locale);
+
         return [
-            'id'           => (string) $row['id'],
-            'type'         => (string) $row['type'],
-            'course_id'    => (int) $row['course_id'],
-            'course_title' => (string) $row['course_title'],
-            'issued_at'    => $row['issued_at'],
-            'issued_date'  => $row['issued_date'],
-            'user_rating'  => $row['user_rating'] ?? null,
-            'learner'      => $request->user()
+            'id'                 => (int) $certificate->id,
+            'uuid'               => $certificate->uuid,
+            'certificate_number' => $certificate->certificate_number,
+            'status'             => $certificate->status,
+            'course'             => [
+                'id'    => (int) $certificate->course_id,
+                'title' => $title,
+            ],
+            // Flat aliases retained for existing mobile cards.
+            'course_id'          => (int) $certificate->course_id,
+            'course_title'       => $title,
+            'issued_at'          => optional($certificate->issued_at)->toIso8601String(),
+            'issued_date'        => optional($certificate->issued_at)->toDateString(),
+            'learner'            => $request->user()
                 ? (new LearnerIdentityResource($request->user()))->toArray($request)
                 : null,
         ];

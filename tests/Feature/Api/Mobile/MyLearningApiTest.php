@@ -155,18 +155,22 @@ class MyLearningApiTest extends MobileTestCase
             'course_id'  => $course->id,
             'section_id' => $cohort->id,
         ]);
-        UserExam::factory()->create([
+        $userExam = UserExam::factory()->create([
             'user_id'   => $user->id,
             'course_id' => $course->id,
             'exam_id'   => $exam->id,
             'status'    => 'success',
         ]);
 
+        // Certificates are first-class rows now — issue it the same way
+        // the live exam-submit hook does.
+        app(\App\Services\CertificateService::class)->issueFromExam($userExam);
+
         $response = $this->withHeaders($this->headersFor($user))
                          ->getJson(self::BASE . '/mobile/my-learning/certificates');
 
         $this->assertPaginated($response);
         $response->assertJsonPath('meta.total', 1)
-                 ->assertJsonStructure(['result' => [['id', 'type', 'course_id', 'course_title', 'issued_at']]]);
+                 ->assertJsonStructure(['result' => [['id', 'uuid', 'certificate_number', 'status', 'course_id', 'course_title', 'issued_at']]]);
     }
 }

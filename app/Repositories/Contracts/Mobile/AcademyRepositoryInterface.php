@@ -7,7 +7,6 @@ namespace App\Repositories\Contracts\Mobile;
 use App\Models\Course;
 use App\Models\CourseSection;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 
@@ -29,13 +28,6 @@ interface AcademyRepositoryInterface
      *                                     `enrolment_closes_at` row.
      */
     public function countAvailableForUser(User $user, Carbon $now, int $defaultCloseOffsetDays): int;
-
-    /**
-     * Categories with their per-user "available courses" counts.
-     *
-     * @return Collection<int, \App\Models\Category>
-     */
-    public function categoriesWithAvailableCount(User $user, Carbon $now, int $defaultCloseOffsetDays): Collection;
 
     /**
      * Per-scope availability counts (`all` / `special` / `general`) for

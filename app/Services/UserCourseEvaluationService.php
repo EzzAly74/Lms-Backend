@@ -11,6 +11,10 @@ use Illuminate\Database\Eloquent\Collection;
 
 class UserCourseEvaluationService
 {
+    public function __construct(
+        private readonly CertificateService $certificates,
+    ) {}
+
     public function hasEvaluated(int $userId, int $courseId): bool
     {
         return UserCourseEvaluation::where('user_id', $userId)
@@ -34,11 +38,13 @@ class UserCourseEvaluationService
     {
         $instructor = $course->instructors()->find($instructorId);
 
+        $firstRow = null;
+
         foreach ($questions as $evaluationId => $answer) {
             $evaluation = Evaluation::with('category')->find($evaluationId);
             if (!$evaluation) continue;
 
-            UserCourseEvaluation::create([
+            $row = UserCourseEvaluation::create([
                 'user_id'                   => $user->id,
                 'user_machine_code'         => $user->machine_code,
                 'user_department'           => $user->department_name,
@@ -57,6 +63,17 @@ class UserCourseEvaluationService
                 },
                 'answer'                    => $answer,
             ]);
+
+            $firstRow ??= $row;
+        }
+
+        // Completing an evaluation-based course earns its certificate.
+        // Eligibility (course.certificate && is_evaluate) + dedup are
+        // enforced inside CertificateService.
+        if ($firstRow !== null) {
+            $firstRow->setRelation('course', $course);
+            $firstRow->setRelation('user', $user);
+            $this->certificates->issueFromEvaluation($firstRow);
         }
     }
 }

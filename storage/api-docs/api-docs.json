@@ -41,32 +41,6 @@
                 }
             }
         },
-        "/mobile/academy/categories": {
-            "get": {
-                "tags": [
-                    "Mobile"
-                ],
-                "summary": "📱 [MOBILE · S-02] Category chips",
-                "description": "📱 **MOBILE** · Screen **S-02 — Course list** · Audience: Employee/Learner mobile app · Returns the filter chips (`All` + every category that has at least one joinable course for this user).",
-                "operationId": "971eb33ce3c63508cf61fd7fe92f4d41",
-                "parameters": [
-                    {
-                        "$ref": "#/components/parameters/MobileAuthorization"
-                    },
-                    {
-                        "$ref": "#/components/parameters/EmployeeCode"
-                    },
-                    {
-                        "$ref": "#/components/parameters/AcceptLanguage"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            }
-        },
         "/mobile/academy/scopes": {
             "get": {
                 "tags": [
@@ -300,14 +274,14 @@
                 }
             }
         },
-        "/mobile/certificates/{compoundId}": {
+        "/mobile/certificates/{certificateId}": {
             "get": {
                 "tags": [
                     "Mobile"
                 ],
                 "summary": "📱 [MOBILE · S-07] Single certificate detail",
-                "description": "📱 **MOBILE** · Screen **S-07 — Certificates · detail tap** · Audience: Employee/Learner mobile app · Looks up a derived certificate by its compound id (`exam:123` / `evaluation:456`).",
-                "operationId": "2a77fcfe6647374457e1191db16e0fc0",
+                "description": "📱 **MOBILE** · Screen **S-07 — Certificates · detail tap** · Audience: Employee/Learner mobile app · Looks up a certificate by its own integer id (scoped to the learner).",
+                "operationId": "67e67f1a31bade71a73c9fb7194786ba",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/MobileAuthorization"
@@ -319,11 +293,11 @@
                         "$ref": "#/components/parameters/AcceptLanguage"
                     },
                     {
-                        "name": "compoundId",
+                        "name": "certificateId",
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -337,14 +311,14 @@
                 }
             }
         },
-        "/mobile/certificates/{compoundId}/download": {
+        "/mobile/certificates/{certificateId}/download": {
             "get": {
                 "tags": [
                     "Mobile"
                 ],
                 "summary": "📱 [MOBILE · S-07] Download certificate image",
-                "description": "📱 **MOBILE** · Screen **S-07 — Certificates · Download** · Audience: Employee/Learner mobile app · Returns the rendered base64 JPEG (same template used by the legacy web view).",
-                "operationId": "4918d37f0416754e5feca910c0fa3a73",
+                "description": "📱 **MOBILE** · Screen **S-07 — Certificates · Download** · Audience: Employee/Learner mobile app · Returns the rendered base64 JPEG for the certificate.",
+                "operationId": "9c5b7dd39ebf79f88987f4617d262868",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/MobileAuthorization"
@@ -356,11 +330,11 @@
                         "$ref": "#/components/parameters/AcceptLanguage"
                     },
                     {
-                        "name": "compoundId",
+                        "name": "certificateId",
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],

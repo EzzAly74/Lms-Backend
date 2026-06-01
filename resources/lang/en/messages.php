@@ -34,6 +34,11 @@ return [
     'course_not_enrolled'     => 'You are not enrolled in this course.',
     'course_not_evaluatable'  => 'This course is not available for evaluation.',
 
+    // Certificates (first-class entity)
+    'certificate_issued'      => 'Certificate issued successfully.',
+    'certificate_revoked'     => 'Certificate revoked successfully.',
+    'certificate_not_found'   => 'Certificate not found.',
+
     // Dashboard — Session Passcode widget
     'passcode' => [
         'generated'       => 'Passcode generated.',
@@ -43,7 +48,6 @@ return [
     // Mobile — Academy & Enrolment (S-01 → S-04)
     'mobile' => [
         'academy_summary'             => 'Academy summary retrieved.',
-        'academy_categories'          => 'Academy categories retrieved.',
         'academy_scopes'              => 'Academy scopes retrieved.',
         'scope_all'                   => 'All',
         'scope_special'               => 'Special Courses',

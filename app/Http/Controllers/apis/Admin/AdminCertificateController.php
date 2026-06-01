@@ -102,4 +102,24 @@ class AdminCertificateController extends ApiController
             'Cache-Control'       => 'private, max-age=0, no-store',
         ]);
     }
+
+    /** GET /api/v1/admin/certificates/{certificate}/download — download by certificate id. */
+    public function download(int $certificate): Response
+    {
+        $cert = $this->service->renderById($certificate);
+
+        return response($cert['binary'], 200, [
+            'Content-Type'        => 'image/jpeg',
+            'Content-Disposition' => 'attachment; filename="'.$cert['filename'].'"',
+            'Cache-Control'       => 'private, max-age=0, no-store',
+        ]);
+    }
+
+    /** POST /api/v1/admin/certificates/{certificate}/revoke — revoke (keeps history). */
+    public function revoke(Request $request, int $certificate): JsonResponse
+    {
+        $row = $this->service->revoke($certificate, $request->user());
+
+        return $this->success(__('messages.certificate_revoked'), $row);
+    }
 }

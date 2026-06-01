@@ -48,41 +48,6 @@ final class AcademyService
     }
 
     /**
-     * S-02 filter chip data — every category that has at least one
-     * still-joinable course for this user, plus an `All` rollup row.
-     *
-     * @return Collection<int, array{
-     *     id: ?int, name: ?string, count: int, is_all: bool
-     * }>
-     */
-    public function categoryChipsFor(User $user, string $locale): Collection
-    {
-        $rows = $this->repository->categoriesWithAvailableCount(
-            $user,
-            now(),
-            $this->settings->academyDefaultCloseOffsetDays(),
-        );
-
-        $perCategory = $rows->map(fn ($category) => [
-            'id'     => (int) $category->id,
-            'name'   => (string) ($category->getTranslation('name', $locale) ?? $category->name),
-            'count'  => (int) ($category->available_count ?? 0),
-            'is_all' => false,
-        ])->values();
-
-        // Sum is *derived* from the per-category counts — no second
-        // round-trip to the DB.
-        $allCount = $perCategory->sum('count');
-
-        return collect([[
-            'id'     => null,
-            'name'   => __('messages.all') !== 'messages.all' ? __('messages.all') : 'All',
-            'count'  => $allCount,
-            'is_all' => true,
-        ]])->merge($perCategory)->values();
-    }
-
-    /**
      * S-02 scope chips — fixed `All` / `Special` / `General` filters.
      *
      *   - Special → courses tied to the employee's job-title

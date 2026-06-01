@@ -4,9 +4,9 @@ namespace App\Services\Admin;
 
 use App\Http\Traits\HelperTrait;
 use App\Models\CertificateTemplate;
-use App\Models\Course;
-use App\Models\UserCourseEvaluation;
-use App\Models\UserExam;
+use App\Models\UserCertificate;
+use App\Repositories\Contracts\UserCertificateRepositoryInterface;
+use App\Services\CertificateService;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
@@ -37,6 +37,11 @@ use Illuminate\Support\Str;
 class AdminCertificateService
 {
     use HelperTrait;
+
+    public function __construct(
+        private readonly UserCertificateRepositoryInterface $certificates,
+        private readonly CertificateService $certificateService,
+    ) {}
 
     /* ------------------------------------------------------------------ *
      |  Template (single active row)                                      |
@@ -233,54 +238,75 @@ class AdminCertificateService
      */
     public function paginateIssued(int $perPage, ?string $search, ?int $courseId): LengthAwarePaginator
     {
-        $rows = $this->buildIssuedRows($search, $courseId);
+        $paginator = $this->certificates->paginateAdmin($perPage, $search, $courseId);
+        $paginator->getCollection()->transform(fn (UserCertificate $c) => $this->formatRow($c));
 
-        $page  = max(1, (int) request()->input('page', 1));
-        $slice = $rows->forPage($page, $perPage)->values();
-
-        return new ConcretePaginator(
-            $slice,
-            $rows->count(),
-            $perPage,
-            $page,
-            ['path' => request()->url(), 'query' => request()->query()],
-        );
+        return $paginator;
     }
 
     /**
-     * Render the certificate as a JPEG for the given learner+course and
-     * stream it to the caller. Re-uses the legacy
+     * Render an issued certificate as a JPEG by certificate id and stream
+     * it to the caller. Re-uses the legacy
      * `HelperTrait::generateCertificate()` so the visual output is
      * identical to the existing blade page.
      *
      * @return array{filename:string,binary:string}
      */
+    public function renderById(int $certificateId): array
+    {
+        $certificate = $this->certificates->findById($certificateId);
+        abort_if($certificate === null, 404);
+
+        return $this->renderCertificate($certificate);
+    }
+
+    /**
+     * Backward-compatible render by learner + course (used by the legacy
+     * `/admin/certificates/{userId}/{courseId}/download` route the Angular
+     * dashboard currently calls). Resolves the active certificate row.
+     *
+     * @return array{filename:string,binary:string}
+     */
     public function renderIssuedCertificate(int $userId, int $courseId): array
     {
-        $course = Course::query()->findOrFail($courseId);
+        $certificate = $this->certificates->findActiveByUserAndCourse($userId, $courseId);
+        abort_if($certificate === null, 404);
 
-        $issuance = $course->is_evaluate
-            ? UserCourseEvaluation::query()
-                ->with(['user:id,name', 'course:id,title,title_for_certificate'])
-                ->where('user_id', $userId)
-                ->where('course_id', $courseId)
-                ->first()
-            : UserExam::query()
-                ->with(['user:id,name', 'course:id,title,title_for_certificate', 'exam:id,is_final'])
-                ->whereHas('exam', fn ($q) => $q->where('is_final', true))
-                ->where('status', 'success')
-                ->where('user_id', $userId)
-                ->where('course_id', $courseId)
-                ->first();
+        return $this->renderCertificate($certificate);
+    }
 
-        abort_if(!$issuance, 404);
+    /**
+     * Revoke an issued certificate (keeps the row + history).
+     *
+     * @return array<string,mixed>
+     */
+    public function revoke(int $certificateId, ?Authenticatable $admin): array
+    {
+        $certificate = $this->certificates->findById($certificateId);
+        abort_if($certificate === null, 404);
 
-        $courseTitle = $course->title_for_certificate ?: $course->title;
-        $learnerName = $issuance->user?->name ?? '—';
+        $certificate = $this->certificateService->revoke(
+            $certificate,
+            $admin?->getAuthIdentifier() ? (int) $admin->getAuthIdentifier() : null,
+        );
+
+        return $this->formatRow($certificate->loadMissing(['user', 'course']));
+    }
+
+    /* ------------------------------------------------------------------ *
+     |  Internals                                                         |
+     * ------------------------------------------------------------------ */
+
+    /** @return array{filename:string,binary:string} */
+    private function renderCertificate(UserCertificate $certificate): array
+    {
+        $learnerName = $certificate->metadata['learner_name']
+            ?? $certificate->user?->name
+            ?? '—';
+        $courseTitle = $certificate->localizedCourseTitle(app()->getLocale());
 
         $base64 = $this->generateCertificate($courseTitle, $learnerName);
-
-        $safe = Str::slug($learnerName.'-'.$courseTitle, '_') ?: 'certificate';
+        $safe   = Str::slug($learnerName.'-'.$courseTitle, '_') ?: 'certificate';
 
         return [
             'filename' => $safe.'.jpg',
@@ -288,83 +314,39 @@ class AdminCertificateService
         ];
     }
 
-    /* ------------------------------------------------------------------ *
-     |  Internals                                                         |
-     * ------------------------------------------------------------------ */
-
-    /**
-     * @return Collection<int,array<string,mixed>>
-     */
-    private function buildIssuedRows(?string $search, ?int $courseId): Collection
-    {
-        $needle = trim((string) $search);
-
-        $exam = UserExam::query()
-            ->with([
-                'course:id,title,title_for_certificate,is_evaluate',
-                'user:id,machine_code,name,department_name',
-                'exam:id,is_final',
-            ])
-            ->whereHas('course', fn ($q) => $q->where('certificate', true)->where('is_evaluate', false))
-            ->whereHas('exam',   fn ($q) => $q->where('is_final', true))
-            ->where('status', 'success')
-            ->when($courseId, fn ($q) => $q->where('course_id', $courseId))
-            ->get()
-            ->map(fn ($ue) => $this->formatRow($ue, 'exam'));
-
-        $eval = UserCourseEvaluation::query()
-            ->with([
-                'course:id,title,title_for_certificate,is_evaluate',
-                'user:id,machine_code,name,department_name',
-            ])
-            ->whereHas('course', fn ($q) => $q->where('certificate', true)->where('is_evaluate', true))
-            ->when($courseId, fn ($q) => $q->where('course_id', $courseId))
-            ->get()
-            ->unique(fn ($row) => $row->user_id.'-'.$row->course_id)
-            ->map(fn ($uce) => $this->formatRow($uce, 'evaluation'));
-
-        $merged = collect()->merge($exam)->merge($eval)->sortByDesc('issued_at')->values();
-
-        if ($needle !== '') {
-            $lc = mb_strtolower($needle);
-            $merged = $merged->filter(function (array $row) use ($lc) {
-                return Str::contains(mb_strtolower((string) ($row['learner_name'] ?? '')), $lc)
-                    || Str::contains(mb_strtolower((string) ($row['employee_id']  ?? '')), $lc)
-                    || Str::contains(mb_strtolower((string) ($row['course_title'] ?? '')), $lc);
-            })->values();
-        }
-
-        return $merged;
-    }
-
     /** @return array{int,?string} [total_issued, last_issued_at_formatted] */
     private function issuedAggregates(): array
     {
-        $rows = $this->buildIssuedRows(null, null);
-        $total = $rows->count();
-
-        $latest = $rows->first()['issued_at'] ?? null;
-
-        return [$total, $latest];
-    }
-
-    private function formatRow($row, string $type): array
-    {
-        $course = $row->course;
-        $user   = $row->user;
-
-        $title = $course?->getTranslation('title_for_certificate', app()->getLocale())
-            ?: $course?->getTranslation('title', app()->getLocale());
+        $total  = $this->certificates->countActive();
+        $latest = $this->certificates->paginateAdmin(1, null, null)->getCollection()->first();
 
         return [
-            'user_id'        => (int) ($user?->id ?? 0),
-            'course_id'      => (int) ($course?->id ?? 0),
-            'type'           => $type,
-            'employee_id'    => $user?->machine_code ?: null,
-            'learner_name'   => $user?->name ?: '—',
-            'department'     => $user?->department_name,
-            'course_title'   => $title ?: '—',
-            'issued_at'      => optional($row->created_at)->format('Y-m-d H:i:s'),
+            $total,
+            $latest instanceof UserCertificate
+                ? optional($latest->issued_at)->format('Y-m-d H:i:s')
+                : null,
+        ];
+    }
+
+    /** @return array<string,mixed> */
+    private function formatRow(UserCertificate $certificate): array
+    {
+        $course = $certificate->course;
+        $user   = $certificate->user;
+
+        return [
+            'id'                 => (int) $certificate->id,
+            'uuid'               => $certificate->uuid,
+            'certificate_number' => $certificate->certificate_number,
+            'status'             => $certificate->status,
+            'user_id'            => (int) ($user?->id ?? 0),
+            'course_id'          => (int) $certificate->course_id,
+            'type'               => $certificate->source_type,
+            'employee_id'        => $user?->machine_code ?: ($certificate->metadata['learner_machine_code'] ?? null),
+            'learner_name'       => $user?->name ?: ($certificate->metadata['learner_name'] ?? '—'),
+            'department'         => $user?->department_name ?? ($certificate->metadata['learner_department'] ?? null),
+            'course_title'       => $certificate->localizedCourseTitle(app()->getLocale()) ?: '—',
+            'issued_at'          => optional($certificate->issued_at)->format('Y-m-d H:i:s'),
         ];
     }
 

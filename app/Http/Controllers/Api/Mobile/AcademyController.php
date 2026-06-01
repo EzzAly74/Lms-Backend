@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\Mobile;
 
 use App\Http\Requests\Api\Mobile\EnrolmentRequest;
-use App\Http\Resources\Mobile\AcademyCategoryChipResource;
 use App\Http\Resources\Mobile\AcademyCourseCardResource;
 use App\Http\Resources\Mobile\AcademyCourseDetailResource;
 use App\Http\Resources\Mobile\AcademyEntrySummaryResource;
@@ -56,28 +55,6 @@ class AcademyController extends MobileBaseController
         return $this->success(
             __('messages.mobile.academy_summary'),
             new AcademyEntrySummaryResource($summary),
-        );
-    }
-
-    /**
-     * @OA\Get(
-     *     path="/mobile/academy/categories",
-     *     tags={"Mobile"},
-     *     summary="📱 [MOBILE · S-02] Category chips",
-     *     description="📱 **MOBILE** · Screen **S-02 — Course list** · Audience: Employee/Learner mobile app · Returns the filter chips (`All` + every category that has at least one joinable course for this user).",
-     *     @OA\Parameter(ref="#/components/parameters/MobileAuthorization"),
-     *     @OA\Parameter(ref="#/components/parameters/EmployeeCode"),
-     *     @OA\Parameter(ref="#/components/parameters/AcceptLanguage"),
-     *     @OA\Response(response=200, description="OK")
-     * )
-     */
-    public function categories(Request $request): JsonResponse
-    {
-        $chips = $this->academy->categoryChipsFor($request->user(), app()->getLocale());
-
-        return $this->success(
-            __('messages.mobile.academy_categories'),
-            AcademyCategoryChipResource::collection($chips),
         );
     }
 

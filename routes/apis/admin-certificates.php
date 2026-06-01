@@ -19,6 +19,14 @@ Route::middleware(['auth.user', 'role:Admin'])->prefix('admin')->group(function 
     Route::get('certificates/template/file',     [AdminCertificateController::class, 'templateFile']);
 
     Route::get('certificates',                                       [AdminCertificateController::class, 'index']);
+
+    // First-class certificate operations (by certificate id).
+    Route::get('certificates/{certificate}/download',                [AdminCertificateController::class, 'download'])
+        ->whereNumber('certificate');
+    Route::post('certificates/{certificate}/revoke',                 [AdminCertificateController::class, 'revoke'])
+        ->whereNumber('certificate');
+
+    // Backward-compatible download by learner + course (legacy dashboard anchor).
     Route::get('certificates/{userId}/{courseId}/download',          [AdminCertificateController::class, 'downloadIssued'])
         ->whereNumber('userId')
         ->whereNumber('courseId');

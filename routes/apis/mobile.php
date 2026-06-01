@@ -53,7 +53,6 @@ Route::middleware(['mobile.token', 'mobile.employee'])
         // ── S-01 → S-04 · Academy ────────────────────────────────────
         Route::prefix('academy')->group(function () {
             Route::get('summary',                            [AcademyController::class, 'summary']);
-            Route::get('categories',                         [AcademyController::class, 'categories']);
             Route::get('scopes',                             [AcademyController::class, 'scopes']);
             Route::get('courses',                            [AcademyController::class, 'courses']);
             Route::get('courses/{course}',                   [AcademyController::class, 'show'])
@@ -78,11 +77,13 @@ Route::middleware(['mobile.token', 'mobile.employee'])
         Route::post('attendance/mark',                   [AttendanceController::class, 'mark']);
 
         // ── S-07 · Certificate detail + download ─────────────────────
+        // Certificates are first-class entities — looked up by their own
+        // integer id (scoped to the learner). No more compound ids.
         Route::prefix('certificates')->group(function () {
-            Route::get('{compoundId}',          [CertificateController::class, 'show'])
-                ->where('compoundId', '[a-z]+:[0-9]+');
-            Route::get('{compoundId}/download', [CertificateController::class, 'download'])
-                ->where('compoundId', '[a-z]+:[0-9]+');
+            Route::get('{certificateId}',          [CertificateController::class, 'show'])
+                ->whereNumber('certificateId');
+            Route::get('{certificateId}/download', [CertificateController::class, 'download'])
+                ->whereNumber('certificateId');
         });
     });
 

@@ -34,6 +34,11 @@ return [
     'course_not_enrolled'     => 'أنت غير مسجل في هذه الدورة.',
     'course_not_evaluatable'  => 'هذه الدورة غير متاحة للتقييم.',
 
+    // Certificates (first-class entity)
+    'certificate_issued'      => 'تم إصدار الشهادة بنجاح.',
+    'certificate_revoked'     => 'تم إلغاء الشهادة بنجاح.',
+    'certificate_not_found'   => 'الشهادة غير موجودة.',
+
     // لوحة التحكم — أداة رمز الحضور
     'passcode' => [
         'generated'       => 'تم إنشاء رمز الحضور.',
@@ -43,7 +48,6 @@ return [
     // الموبايل — الأكاديمية والتسجيل (S-01 → S-04)
     'mobile' => [
         'academy_summary'             => 'تم استرجاع ملخّص الأكاديمية.',
-        'academy_categories'          => 'تم استرجاع تصنيفات الأكاديمية.',
         'academy_scopes'              => 'تم استرجاع تبويبات الأكاديمية.',
         'scope_all'                   => 'الكل',
         'scope_special'               => 'دورات تخصصية',

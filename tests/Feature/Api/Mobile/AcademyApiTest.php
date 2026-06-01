@@ -36,22 +36,6 @@ class AcademyApiTest extends MobileTestCase
                  ->assertJsonPath('result.has_available', true);
     }
 
-    // ── S-02 categories ─────────────────────────────────────────────
-
-    public function test_categories_include_all_chip(): void
-    {
-        $user = $this->employee();
-        $this->joinableCourse();
-
-        $response = $this->withHeaders($this->headersFor($user))
-                         ->getJson(self::BASE . '/mobile/academy/categories');
-
-        $this->assertSuccess($response);
-        $response->assertJsonStructure(['result' => [['id', 'name', 'count', 'is_all']]]);
-        // The synthetic "All" chip must always be present.
-        $this->assertTrue(collect($response->json('result'))->contains('is_all', true));
-    }
-
     // ── S-02 list ───────────────────────────────────────────────────
 
     public function test_courses_list_is_paginated_and_shows_joinable_course(): void
