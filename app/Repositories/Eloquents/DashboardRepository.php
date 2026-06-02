@@ -23,9 +23,27 @@ class DashboardRepository implements DashboardRepositoryInterface
             ? "(SELECT COUNT(*) FROM users WHERE learner_type = 'offline')"
             : '0';
 
+        // "Active courses" must mean the same thing here as it does on the
+        // All Courses list: a course with a cohort whose date window
+        // contains today (NOT the raw stored `courses.active` publish
+        // flag). We reuse the exact predicate from
+        // CourseRepository::tabCounts() so the dashboard card and the
+        // list's "Active" tab can never drift. `$today` is a controlled
+        // server-clock value (no user input) so it's embedded directly,
+        // matching the tabCounts convention.
+        $today = now()->toDateString();
+
+        $hasActiveCohortSql = "(SELECT COUNT(*) FROM courses WHERE EXISTS (
+            SELECT 1 FROM course_sections cs
+            WHERE cs.course_id = courses.id
+              AND (cs.status IS NULL OR cs.status <> 'inactive')
+              AND cs.start_date IS NOT NULL AND cs.end_date IS NOT NULL
+              AND cs.start_date <= '{$today}' AND cs.end_date >= '{$today}'
+        ))";
+
         return (array) DB::selectOne("
             SELECT
-                (SELECT COUNT(*) FROM courses WHERE active = 1)                          AS active_courses,
+                {$hasActiveCohortSql}                                                     AS active_courses,
                 (SELECT COUNT(*) FROM courses WHERE active = 0)                          AS awaiting_publish,
                 (SELECT COUNT(*) FROM courses)                                            AS courses,
                 (SELECT COUNT(*) FROM users)                                              AS users,
