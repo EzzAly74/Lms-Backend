@@ -111,7 +111,14 @@ class MobileSettingSeeder extends Seeder
                 'type'   => 'number',
                 'label'  => 'Mobile · Academy — default enrolment-close offset before cohort start (days)',
                 'key'    => 'academy_default_close_offset_days',
-                'value'  => '5',
+                'value'  => '0',
+                'module' => 'mobile_academy',
+            ],
+            [
+                'type'   => 'number',
+                'label'  => 'Mobile · Academy — scheduled cohort visibility window before start (days)',
+                'key'    => 'academy_scheduled_visibility_days',
+                'value'  => '30',
                 'module' => 'mobile_academy',
             ],
 
@@ -183,6 +190,26 @@ class MobileSettingSeeder extends Seeder
                 'label'  => 'Mobile · Attendance — session "still open" buffer (minutes after time_to)',
                 'key'    => 'attendance_session_grace_minutes',
                 'value'  => '15',
+                'module' => 'mobile_attendance',
+            ],
+            [
+                // Yes  → the passcode stays the same for the whole session.
+                // No   → the passcode rotates every `passcode_reset_seconds`.
+                'type'   => 'boolean',
+                'label'  => 'Mobile · Attendance — keep the passcode static for the whole session',
+                'key'    => 'course_attendance_enabled',
+                'value'  => '1',
+                'module' => 'mobile_attendance',
+            ],
+            [
+                // Only relevant when `course_attendance_enabled` is off: how
+                // often the live passcode resets (the dashboard widget counts
+                // down to this and re-issues a fresh code, so a stale code is
+                // never accepted on the mobile S-06 Mark Present screen).
+                'type'   => 'number',
+                'label'  => 'Mobile · Attendance — passcode reset interval (seconds, rotating mode)',
+                'key'    => 'passcode_reset_seconds',
+                'value'  => '30',
                 'module' => 'mobile_attendance',
             ],
 

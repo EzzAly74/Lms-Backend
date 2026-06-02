@@ -134,7 +134,9 @@ class Course extends Model
      *
      * Logic:
      *   - stored `inactive`             → `inactive`
-     *   - today < start_date            → `scheduled`
+     *   - today < start_date            → `scheduled` | `open_for_enrollment`
+     *                                      (the admin's manual pre-start
+     *                                      enrolment-window choice is kept)
      *   - start_date ≤ today ≤ end_date → `active`
      *   - today > end_date              → `completed`
      *   - no dates                      → fall back to stored status
@@ -159,7 +161,13 @@ class Course extends Model
         $today = Carbon::today();
 
         if ($startDate !== null && $today->lt($startDate)) {
-            return 'scheduled';
+            // Before the cohort starts the only two meaningful states are
+            // the manual enrolment-window choices; `open_for_enrollment`
+            // is surfaced as-is so it can drive earlier app visibility,
+            // everything else collapses to `scheduled`.
+            return $storedStatus === 'open_for_enrollment'
+                ? 'open_for_enrollment'
+                : 'scheduled';
         }
 
         if ($endDate !== null && $today->gt($endDate)) {
@@ -203,7 +211,7 @@ class Course extends Model
             if ($status === 'active') {
                 return 'active';
             }
-            if ($status === 'scheduled') {
+            if ($status === 'scheduled' || $status === 'open_for_enrollment') {
                 $hasScheduled = true;
             }
         }

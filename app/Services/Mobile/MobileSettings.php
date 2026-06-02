@@ -78,6 +78,21 @@ final class MobileSettings
         return $this->nonNegativeInt('academy_default_close_offset_days');
     }
 
+    /**
+     * How many days before its start date a `scheduled` cohort becomes
+     * visible in the Academy (Figma 332:10708 — "automatically open 1
+     * month before the start date"). `open_for_enrollment` cohorts ignore
+     * this and appear immediately.
+     *
+     * Reads a safe fallback (30 ≈ one month) when the setting row hasn't
+     * been seeded yet so the Academy never goes blank on an un-migrated
+     * environment.
+     */
+    public function academyScheduledVisibilityDays(): int
+    {
+        return $this->nonNegativeIntOr('academy_scheduled_visibility_days', 30);
+    }
+
     // ────────────────────────────────────────────────────────────
     // My Learning (S-05)
     // ────────────────────────────────────────────────────────────
@@ -129,6 +144,34 @@ final class MobileSettings
     public function attendanceSessionGraceMinutes(): int
     {
         return $this->nonNegativeInt('attendance_session_grace_minutes');
+    }
+
+    /**
+     * When true the issued passcode stays valid for the entire session
+     * window ("Course Attendance = Yes" → "The passcode will remain the
+     * same for the entire session"). When false the passcode rotates
+     * every `passcodeResetSeconds()` and must be re-issued by the
+     * instructor dashboard (Figma — "Passcode will reset each …").
+     *
+     * Defaults to the static behaviour on un-seeded environments so an
+     * older deployment keeps its previous "valid for the window" semantics.
+     */
+    public function passcodeStaticForSession(): bool
+    {
+        return $this->boolOr('course_attendance_enabled', true);
+    }
+
+    /**
+     * Rotation interval (seconds) for the live passcode when it is NOT
+     * static. Falls back to 30s on un-seeded environments and clamps to a
+     * sane floor so a misconfigured `0` never produces an already-expired
+     * code.
+     */
+    public function passcodeResetSeconds(): int
+    {
+        $value = $this->nonNegativeIntOr('passcode_reset_seconds', 30);
+
+        return $value > 0 ? $value : 30;
     }
 
     // ────────────────────────────────────────────────────────────
@@ -219,6 +262,40 @@ final class MobileSettings
         }
 
         return $value;
+    }
+
+    /**
+     * Like nonNegativeInt() but tolerates a missing/blank row, returning
+     * the supplied default instead of throwing. Used for settings added
+     * after initial seeding so older environments degrade gracefully.
+     */
+    private function nonNegativeIntOr(string $key, int $default): int
+    {
+        $map = $this->loadMap();
+
+        if (!array_key_exists($key, $map) || $map[$key] === '' || $map[$key] === null) {
+            return $default;
+        }
+
+        $value = (int) $map[$key];
+
+        return $value >= 0 ? $value : $default;
+    }
+
+    /**
+     * Boolean accessor that tolerates a missing/blank row (returning the
+     * supplied default). Accepts the usual truthy spellings ("1", "true",
+     * "yes", "on") case-insensitively.
+     */
+    private function boolOr(string $key, bool $default): bool
+    {
+        $map = $this->loadMap();
+
+        if (!array_key_exists($key, $map) || $map[$key] === '' || $map[$key] === null) {
+            return $default;
+        }
+
+        return in_array(strtolower((string) $map[$key]), ['1', 'true', 'yes', 'on'], true);
     }
 
     private function intValue(string $key): int

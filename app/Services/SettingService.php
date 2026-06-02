@@ -33,5 +33,9 @@ class SettingService
         }
 
         Cache::forget('cms.settings.map');
+        // Mobile thresholds (academy/attendance/rating/...) are cached
+        // separately under `mobile.settings.map`. Without this, edits to a
+        // `mobile_*` setting from the admin panel would lag up to 10 minutes.
+        Cache::forget('mobile.settings.map');
     }
 }

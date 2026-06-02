@@ -39,7 +39,11 @@ final class EnumRegistry
             'values' => ['beginner', 'intermediate', 'professional'],
         ],
         'cohort_status' => [
-            'values' => ['scheduled', 'active', 'completed', 'inactive'],
+            // `scheduled` and `open_for_enrollment` are the only two an
+            // admin picks manually; `active`/`completed` are derived from
+            // the cohort's start/end dates (see Course::deriveCohortStatus),
+            // and `inactive` is the manual "take offline" override.
+            'values' => ['scheduled', 'open_for_enrollment', 'active', 'completed', 'inactive'],
         ],
         'module_content_type' => [
             'values' => ['video', 'document', 'article', 'link'],

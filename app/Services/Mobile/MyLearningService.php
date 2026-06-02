@@ -83,11 +83,15 @@ final class MyLearningService
                 $q->where(function ($q2) {
                     $q2->whereNull('time_from')->whereNull('time_to');
                 })->orWhere(function ($q2) use ($now, $openBuf, $graceBuf) {
+                    // `time_from`/`time_to` are TIME columns; TIMESTAMPDIFF on
+                    // time-only values yields NULL, so compare on the clock
+                    // directly. Open buffer = how early the window opens before
+                    // start; grace = how late it stays open after the end.
                     $q2->whereRaw(
-                        'TIMESTAMPDIFF(MINUTE, ?, time_from) <= ?',
+                        'time_from <= ADDTIME(?, SEC_TO_TIME(? * 60))',
                         [$now->format('H:i:s'), $openBuf],
                     )->whereRaw(
-                        'TIMESTAMPDIFF(MINUTE, time_to, ?) <= ?',
+                        'time_to >= SUBTIME(?, SEC_TO_TIME(? * 60))',
                         [$now->format('H:i:s'), $graceBuf],
                     );
                 });

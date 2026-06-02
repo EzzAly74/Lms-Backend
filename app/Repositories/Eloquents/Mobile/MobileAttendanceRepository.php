@@ -56,11 +56,14 @@ final class MobileAttendanceRepository implements MobileAttendanceRepositoryInte
                 $q->where(function ($q2) {
                     $q2->whereNull('time_from')->whereNull('time_to');
                 })->orWhere(function ($q2) use ($nowTime, $openBuf, $graceBuf) {
+                    // `time_from`/`time_to` are TIME columns; TIMESTAMPDIFF on
+                    // time-only values yields NULL (which silently excludes the
+                    // row), so compare on the clock directly instead.
                     $q2->whereRaw(
-                        'TIMESTAMPDIFF(MINUTE, ?, time_from) <= ?',
+                        'time_from <= ADDTIME(?, SEC_TO_TIME(? * 60))',
                         [$nowTime, $openBuf],
                     )->whereRaw(
-                        'TIMESTAMPDIFF(MINUTE, time_to, ?) <= ?',
+                        'time_to >= SUBTIME(?, SEC_TO_TIME(? * 60))',
                         [$nowTime, $graceBuf],
                     );
                 });

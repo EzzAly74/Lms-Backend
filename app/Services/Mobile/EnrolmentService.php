@@ -53,9 +53,8 @@ final class EnrolmentService
                     $course,
                     $user,
                     now(),
-                    $this->academyService->effectiveDeadline(new CourseSection()) !== null
-                        ? 0 // already-applied via the inner default
-                        : 0,
+                    0, // close-offset already applied via the academy default
+                    $this->academyService->scheduledVisibilityDays(),
                 );
             if ($cohort === null) {
                 // Re-fetch via the academy service to keep deadline

@@ -57,7 +57,7 @@ class CourseResource extends JsonResource
             'type'               => $this->course_type,
             'status'             => $effectiveStatus,
             'users_count'        => $this->users_count ?? null,
-            'cohorts_count'      => $this->sessions_count ?? null,
+            'cohorts_count'      => $this->cohorts_count ?? null,
             // Aggregated by the list query (withAvg/withCount). We round to
             // one decimal so the table cell can format with `number:'1.1-1'`
             // without re-doing the math client-side.

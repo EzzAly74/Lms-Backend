@@ -26,8 +26,13 @@ interface AcademyRepositoryInterface
      * @param int $defaultCloseOffsetDays  cohort start - N days when the
      *                                     cohort has no explicit
      *                                     `enrolment_closes_at` row.
+     * @param int $scheduledVisibilityDays how many days before its start
+     *                                     a `scheduled` cohort becomes
+     *                                     visible. `open_for_enrollment`
+     *                                     cohorts ignore this and show
+     *                                     immediately.
      */
-    public function countAvailableForUser(User $user, Carbon $now, int $defaultCloseOffsetDays): int;
+    public function countAvailableForUser(User $user, Carbon $now, int $defaultCloseOffsetDays, int $scheduledVisibilityDays): int;
 
     /**
      * Per-scope availability counts (`all` / `special` / `general`) for
@@ -35,7 +40,7 @@ interface AcademyRepositoryInterface
      *
      * @return array{all: int, special: int, general: int}
      */
-    public function scopeCounts(User $user, Carbon $now, int $defaultCloseOffsetDays): array;
+    public function scopeCounts(User $user, Carbon $now, int $defaultCloseOffsetDays, int $scheduledVisibilityDays): array;
 
     /**
      * Paginated list of courses available to the user, optionally
@@ -48,6 +53,7 @@ interface AcademyRepositoryInterface
         User    $user,
         Carbon  $now,
         int     $defaultCloseOffsetDays,
+        int     $scheduledVisibilityDays,
         int     $perPage,
         ?int    $categoryId,
         ?string $search,
@@ -67,7 +73,7 @@ interface AcademyRepositoryInterface
      * none exists. "Joinable" = stored status not `inactive`, start
      * date >= today, enrolment deadline >= today, and seats remaining.
      */
-    public function nextJoinableCohort(Course $course, User $user, Carbon $now, int $defaultCloseOffsetDays): ?CourseSection;
+    public function nextJoinableCohort(Course $course, User $user, Carbon $now, int $defaultCloseOffsetDays, int $scheduledVisibilityDays): ?CourseSection;
 
     /**
      * Is the user already enrolled in this course?

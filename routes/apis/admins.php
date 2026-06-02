@@ -18,8 +18,11 @@ Route::middleware(['auth.user', 'role:Admin'])->group(function () {
 
     // Dashboard passcode widget — read current live-session state and
     // generate a passcode for it in one tap (drives mobile S-06).
-    Route::get('dashboard/passcode',  [DashboardPasscodeController::class, 'current']);
-    Route::post('dashboard/passcode', [DashboardPasscodeController::class, 'generate']);
+    Route::get('dashboard/passcode',          [DashboardPasscodeController::class, 'current']);
+    Route::get('dashboard/passcode/courses',  [DashboardPasscodeController::class, 'courses']);
+    Route::post('dashboard/passcode',         [DashboardPasscodeController::class, 'generate']);
+    Route::post('dashboard/passcode/regenerate', [DashboardPasscodeController::class, 'regenerate']);
+    Route::post('dashboard/passcode/end',        [DashboardPasscodeController::class, 'end']);
 
     // Admin CRUD
     Route::get('admins',           [AdminController::class, 'index']);

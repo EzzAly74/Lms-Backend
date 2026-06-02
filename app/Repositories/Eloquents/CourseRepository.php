@@ -48,7 +48,10 @@ class CourseRepository extends BaseRepository implements CourseRepositoryInterfa
             ])
             ->withCount([
                 'users as users_count',
-                'sessions as sessions_count',
+                // "Cohorts" in the admin UI are course_sections, not the
+                // individual class meetings (course_sessions). Count the
+                // `sections` relation so the column is accurate.
+                'sections as cohorts_count',
                 'ratings as rating_count',
             ])
             ->withAvg('ratings as rating_avg', 'rating')
@@ -157,7 +160,8 @@ class CourseRepository extends BaseRepository implements CourseRepositoryInterfa
             ->withCount([
                 'users as users_count',
                 'sessions as sessions_count',
-                'sessions as cohorts_count',
+                // Cohorts = course_sections (not the per-cohort meetings).
+                'sections as cohorts_count',
                 'ratings as rating_count',
                 // Only count ratings that actually carry a comment so the
                 // "X reviews · Y with comments" header is accurate.

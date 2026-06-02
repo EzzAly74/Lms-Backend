@@ -31,10 +31,11 @@ return [
     ],
 
     'cohort_status' => [
-        'scheduled' => 'مجدولة',
-        'active'    => 'جارية',
-        'completed' => 'منتهية',
-        'inactive'  => 'موقوفة',
+        'scheduled'           => 'مجدولة',
+        'open_for_enrollment' => 'متاحة للتسجيل',
+        'active'              => 'جارية',
+        'completed'           => 'منتهية',
+        'inactive'            => 'موقوفة',
     ],
 
     'module_content_type' => [

@@ -43,6 +43,11 @@ class CourseSectionResource extends JsonResource
             'capacity'       => $this->capacity !== null ? (int) $this->capacity : null,
             'status'         => $effectiveStatus,
             'stored_status'  => $this->status ?? 'scheduled',
+            // Average session length in hours (drives the live attendance
+            // window). Null = fall back to the global default.
+            'avg_session_time' => $this->avg_session_time !== null
+                ? (float) $this->avg_session_time
+                : null,
             // Counted inline by the repository (`withCount`). Falls back
             // to a fresh sub-query if a caller hand-builds a section model.
             'enrolled_count' => (int) ($this->enrolled_count

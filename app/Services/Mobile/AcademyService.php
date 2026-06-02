@@ -39,6 +39,7 @@ final class AcademyService
             $user,
             now(),
             $this->settings->academyDefaultCloseOffsetDays(),
+            $this->settings->academyScheduledVisibilityDays(),
         );
 
         return [
@@ -66,6 +67,7 @@ final class AcademyService
             $user,
             now(),
             $this->settings->academyDefaultCloseOffsetDays(),
+            $this->settings->academyScheduledVisibilityDays(),
         );
 
         return collect([
@@ -103,6 +105,7 @@ final class AcademyService
             user: $user,
             now: now(),
             defaultCloseOffsetDays: $this->settings->academyDefaultCloseOffsetDays(),
+            scheduledVisibilityDays: $this->settings->academyScheduledVisibilityDays(),
             perPage: $effectivePerPage,
             categoryId: $categoryId,
             search: $cleanSearch,
@@ -150,6 +153,7 @@ final class AcademyService
             $user,
             now(),
             $this->settings->academyDefaultCloseOffsetDays(),
+            $this->settings->academyScheduledVisibilityDays(),
         );
     }
 
@@ -183,6 +187,16 @@ final class AcademyService
         }
 
         return CourseCtaState::EnrolNow;
+    }
+
+    /**
+     * Days before its start a `scheduled` cohort becomes app-visible.
+     * Exposed so collaborators (e.g. EnrolmentService) resolve the next
+     * joinable cohort with the same visibility window as the listing.
+     */
+    public function scheduledVisibilityDays(): int
+    {
+        return $this->settings->academyScheduledVisibilityDays();
     }
 
     /**

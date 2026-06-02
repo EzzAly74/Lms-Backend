@@ -28,6 +28,11 @@ final class SessionPasscodeStateResource extends JsonResource
             'available'       => $state['available'] ?? false,
             'state'           => $state['state'] ?? 'idle',
             'passcode_length' => $state['passcode_length'] ?? null,
+            // Rotating-passcode contract: when `rotates` is true the code
+            // resets every `reset_seconds`, so the dashboard runs a live
+            // countdown + auto re-issues a fresh code.
+            'rotates'         => $state['rotates'] ?? false,
+            'reset_seconds'   => $state['reset_seconds'] ?? null,
             'session'         => $state['session'] ?? null,
             'passcode'        => $state['passcode'] ?? null,
         ];

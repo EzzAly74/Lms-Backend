@@ -37,10 +37,11 @@ return [
     ],
 
     'cohort_status' => [
-        'scheduled' => 'Scheduled',
-        'active'    => 'Active',
-        'completed' => 'Completed',
-        'inactive'  => 'Inactive',
+        'scheduled'           => 'Scheduled',
+        'open_for_enrollment' => 'Open for Enrollment',
+        'active'              => 'Active',
+        'completed'           => 'Completed',
+        'inactive'            => 'Inactive',
     ],
 
     'module_content_type' => [

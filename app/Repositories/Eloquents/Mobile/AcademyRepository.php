@@ -39,9 +39,9 @@ final class AcademyRepository implements AcademyRepositoryInterface
         private readonly CourseSection $section,
     ) {}
 
-    public function countAvailableForUser(User $user, Carbon $now, int $defaultCloseOffsetDays): int
+    public function countAvailableForUser(User $user, Carbon $now, int $defaultCloseOffsetDays, int $scheduledVisibilityDays): int
     {
-        return $this->baseAvailableQuery($user, $now, $defaultCloseOffsetDays)->count();
+        return $this->baseAvailableQuery($user, $now, $defaultCloseOffsetDays, $scheduledVisibilityDays)->count();
     }
 
     /**
@@ -57,18 +57,18 @@ final class AcademyRepository implements AcademyRepositoryInterface
      *
      * @return array{all: int, special: int, general: int}
      */
-    public function scopeCounts(User $user, Carbon $now, int $defaultCloseOffsetDays): array
+    public function scopeCounts(User $user, Carbon $now, int $defaultCloseOffsetDays, int $scheduledVisibilityDays): array
     {
         $skillIds = $this->employeeQualificationSkillIds($user);
 
-        $special = $this->baseAvailableQuery($user, $now, $defaultCloseOffsetDays);
+        $special = $this->baseAvailableQuery($user, $now, $defaultCloseOffsetDays, $scheduledVisibilityDays);
         $this->applyScope($special, 'special', $skillIds);
 
-        $general = $this->baseAvailableQuery($user, $now, $defaultCloseOffsetDays);
+        $general = $this->baseAvailableQuery($user, $now, $defaultCloseOffsetDays, $scheduledVisibilityDays);
         $this->applyScope($general, 'general', $skillIds);
 
         return [
-            'all'     => $this->baseAvailableQuery($user, $now, $defaultCloseOffsetDays)->count(),
+            'all'     => $this->baseAvailableQuery($user, $now, $defaultCloseOffsetDays, $scheduledVisibilityDays)->count(),
             'special' => $special->count(),
             'general' => $general->count(),
         ];
@@ -78,6 +78,7 @@ final class AcademyRepository implements AcademyRepositoryInterface
         User    $user,
         Carbon  $now,
         int     $defaultCloseOffsetDays,
+        int     $scheduledVisibilityDays,
         int     $perPage,
         ?int    $categoryId,
         ?string $search,
@@ -85,7 +86,7 @@ final class AcademyRepository implements AcademyRepositoryInterface
     ): LengthAwarePaginator {
         $locale = app()->getLocale();
 
-        $query = $this->baseAvailableQuery($user, $now, $defaultCloseOffsetDays);
+        $query = $this->baseAvailableQuery($user, $now, $defaultCloseOffsetDays, $scheduledVisibilityDays);
         $this->applyScope($query, $scope, $this->employeeQualificationSkillIds($user));
 
         return $query
@@ -147,10 +148,11 @@ final class AcademyRepository implements AcademyRepositoryInterface
             ->findOrFail($courseId);
     }
 
-    public function nextJoinableCohort(Course $course, User $user, Carbon $now, int $defaultCloseOffsetDays): ?CourseSection
+    public function nextJoinableCohort(Course $course, User $user, Carbon $now, int $defaultCloseOffsetDays, int $scheduledVisibilityDays): ?CourseSection
     {
-        $today  = $now->toDateString();
-        $offset = max(0, $defaultCloseOffsetDays);
+        $today      = $now->toDateString();
+        $offset     = max(0, $defaultCloseOffsetDays);
+        $visibility = max(0, $scheduledVisibilityDays);
 
         return $this->section->newQuery()
             ->withCount(['enrollments as enrolled_count'])
@@ -160,6 +162,13 @@ final class AcademyRepository implements AcademyRepositoryInterface
             })
             ->whereNotNull('start_date')
             ->whereDate('start_date', '>=', $today)
+            // App-visibility gate: `open_for_enrollment` shows regardless of
+            // how far out it starts; anything else (scheduled) only surfaces
+            // once it is within `$visibility` days of its start date.
+            ->where(function ($q) use ($today, $visibility) {
+                $q->where('status', 'open_for_enrollment')
+                  ->orWhereRaw('DATE_SUB(start_date, INTERVAL ? DAY) <= ?', [$visibility, $today]);
+            })
             ->where(function ($q) use ($today, $offset) {
                 // Effective deadline = enrolment_closes_at OR start_date - offset.
                 $q->where(function ($q2) use ($today) {
@@ -278,14 +287,15 @@ final class AcademyRepository implements AcademyRepositoryInterface
             ->all();
     }
 
-    private function baseAvailableQuery(User $user, Carbon $now, int $defaultCloseOffsetDays): Builder
+    private function baseAvailableQuery(User $user, Carbon $now, int $defaultCloseOffsetDays, int $scheduledVisibilityDays): Builder
     {
-        $today  = $now->toDateString();
-        $offset = max(0, $defaultCloseOffsetDays);
+        $today      = $now->toDateString();
+        $offset     = max(0, $defaultCloseOffsetDays);
+        $visibility = max(0, $scheduledVisibilityDays);
 
         return $this->course->newQuery()
-            ->where(function ($q) use ($user, $today, $offset) {
-                $this->applyAvailableExists($q, $user, $today, $offset);
+            ->where(function ($q) use ($user, $today, $offset, $visibility) {
+                $this->applyAvailableExists($q, $user, $today, $offset, $visibility);
             });
     }
 
@@ -303,9 +313,9 @@ final class AcademyRepository implements AcademyRepositoryInterface
      * @param  Builder|QueryBuilder  $q
      * @return Builder|QueryBuilder
      */
-    private function applyAvailableExists(Builder|QueryBuilder $q, User $user, string $today, int $offset): Builder|QueryBuilder
+    private function applyAvailableExists(Builder|QueryBuilder $q, User $user, string $today, int $offset, int $visibility): Builder|QueryBuilder
     {
-        return $q->whereExists(function ($sub) use ($user, $today, $offset) {
+        return $q->whereExists(function ($sub) use ($user, $today, $offset, $visibility) {
             $sub->from('course_sections')
                 ->whereColumn('course_sections.course_id', 'courses.id')
                 ->where(function ($q2) {
@@ -314,6 +324,16 @@ final class AcademyRepository implements AcademyRepositoryInterface
                 })
                 ->whereNotNull('course_sections.start_date')
                 ->whereDate('course_sections.start_date', '>=', $today)
+                // App-visibility gate (Figma 332:10708): `open_for_enrollment`
+                // cohorts appear immediately; `scheduled` cohorts only appear
+                // once they are within `$visibility` days of their start date.
+                ->where(function ($q2) use ($today, $visibility) {
+                    $q2->where('course_sections.status', 'open_for_enrollment')
+                       ->orWhereRaw(
+                           'DATE_SUB(course_sections.start_date, INTERVAL ? DAY) <= ?',
+                           [$visibility, $today],
+                       );
+                })
                 ->where(function ($q2) use ($today, $offset) {
                     $q2->where(function ($q3) use ($today) {
                         $q3->whereNotNull('course_sections.enrolment_closes_at')

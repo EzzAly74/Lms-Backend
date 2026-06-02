@@ -19,9 +19,12 @@ class CourseSection extends Model
      * lets the resource call `->format('Y-m-d')` without null gymnastics.
      */
     protected $casts = [
-        'start_date' => 'date',
-        'end_date'   => 'date',
-        'capacity'   => 'integer',
+        'start_date'       => 'date',
+        'end_date'         => 'date',
+        'capacity'         => 'integer',
+        // Average session length in HOURS (decimal). Drives the live
+        // attendance-window length when a session is started for this cohort.
+        'avg_session_time' => 'decimal:2',
     ];
 
     public function lectures()

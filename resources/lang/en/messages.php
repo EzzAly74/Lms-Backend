@@ -41,8 +41,12 @@ return [
 
     // Dashboard — Session Passcode widget
     'passcode' => [
-        'generated'       => 'Passcode generated.',
-        'no_live_session' => 'No live session right now. A passcode can only be generated while a session is in progress.',
+        'generated'         => 'Passcode generated.',
+        'no_live_session'   => 'No live session right now. A passcode can only be generated while a session is in progress.',
+        'session_started'   => 'Session started and passcode generated.',
+        'session_title'     => 'Live Session — :date',
+        'cohort_unavailable' => 'This cohort is not available to start a session (wrong course or already ended).',
+        'session_ended'     => 'Session ended.',
     ],
 
     // Mobile — Academy & Enrolment (S-01 → S-04)

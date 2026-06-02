@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Api;
 
+use App\Models\Course;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class CourseLectureRequest extends FormRequest
 {
@@ -10,6 +12,11 @@ class CourseLectureRequest extends FormRequest
 
     public function rules(): array
     {
+        // The route binds `{course}` to a Course model (implicit binding);
+        // fall back to the raw id when it's not yet resolved.
+        $routeCourse = $this->route('course');
+        $courseId = $routeCourse instanceof Course ? $routeCourse->id : $routeCourse;
+
         return [
             // `section_id` is optional: the service will fall back to a
             // course-default section when omitted, since the admin "Module"
@@ -22,7 +29,19 @@ class CourseLectureRequest extends FormRequest
 
             'content_type'       => 'required|in:video,document,article,link',
             'learner_scope'      => 'required|in:all,cohort',
-            'session_id'         => 'nullable|required_if:learner_scope,cohort|integer|exists:course_sessions,id',
+            // For the "Specific Cohort" scope `session_id` carries the chosen
+            // COHORT id (= course_sections.id), not a course_sessions id — the
+            // column is unconstrained and the mobile cohort-scoping compares it
+            // against the learner's group_id (also a section id). Validate it
+            // against this course's own cohorts so cross-course ids are rejected.
+            'session_id'         => [
+                'nullable',
+                'required_if:learner_scope,cohort',
+                'integer',
+                Rule::exists('course_sections', 'id')->where(
+                    fn ($q) => $q->where('course_id', $courseId),
+                ),
+            ],
             'duration_minutes'   => 'nullable|integer|min:0|max:10000',
 
             // `type` reflects how the `video` value is stored (url | file).

@@ -70,7 +70,8 @@ class CourseSectionController extends ApiController
      *             @OA\Property(property="start_date", type="string",  format="date", nullable=true),
      *             @OA\Property(property="end_date",   type="string",  format="date", nullable=true),
      *             @OA\Property(property="capacity",   type="integer", minimum=1, maximum=10000, nullable=true),
-     *             @OA\Property(property="status",    type="string",  enum={"scheduled","active","completed","inactive"}, nullable=true)
+     *             @OA\Property(property="status",    type="string",  enum={"scheduled","open_for_enrollment","active","completed","inactive"}, nullable=true),
+     *             @OA\Property(property="avg_session_time", type="number", format="float", minimum=0.25, maximum=24, nullable=true, description="Average session length in hours.")
      *         )
      *     ),
      *     @OA\Response(
@@ -172,7 +173,8 @@ class CourseSectionController extends ApiController
      *             @OA\Property(property="start_date", type="string",  format="date", nullable=true),
      *             @OA\Property(property="end_date",   type="string",  format="date", nullable=true),
      *             @OA\Property(property="capacity",   type="integer", minimum=1, maximum=10000, nullable=true),
-     *             @OA\Property(property="status",    type="string",  enum={"scheduled","active","completed","inactive"}, nullable=true)
+     *             @OA\Property(property="status",    type="string",  enum={"scheduled","open_for_enrollment","active","completed","inactive"}, nullable=true),
+     *             @OA\Property(property="avg_session_time", type="number", format="float", minimum=0.25, maximum=24, nullable=true, description="Average session length in hours.")
      *         )
      *     ),
      *     @OA\Response(
@@ -217,7 +219,13 @@ class CourseSectionController extends ApiController
             // `after_or_equal` rather than `after`.
             'end_date'    => 'nullable|date|after_or_equal:start_date',
             'capacity'    => 'nullable|integer|min:1|max:10000',
-            'status'      => 'nullable|string|in:scheduled,active,completed,inactive',
+            // Admins only ever set the two enrolment-window choices; the
+            // calendar drives `active`/`completed`. We still accept the
+            // derived values so a round-tripped edit doesn't 422.
+            'status'      => 'nullable|string|in:scheduled,open_for_enrollment,active,completed,inactive',
+            // Average session length in hours (e.g. 1.5). Drives the live
+            // attendance-window length for this cohort's sessions.
+            'avg_session_time' => 'nullable|numeric|min:0.25|max:24',
         ]);
     }
 

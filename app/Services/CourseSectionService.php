@@ -47,7 +47,7 @@ class CourseSectionService
     private function fillable(array $data): array
     {
         $out = ['name' => $data['name']];
-        foreach (['start_date', 'end_date', 'capacity', 'status'] as $key) {
+        foreach (['start_date', 'end_date', 'capacity', 'status', 'avg_session_time'] as $key) {
             if (array_key_exists($key, $data)) {
                 $out[$key] = $data[$key];
             }

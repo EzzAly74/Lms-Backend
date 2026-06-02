@@ -30,17 +30,73 @@ final class SessionPasscodeService
             ? $lengthOverride
             : $this->settings->attendancePasscodeLength();
 
-        $windowMinutes = $this->settings->attendanceWindowMinutes();
-        $effectiveExpiry = $expiresAt ?? now()->addMinutes($windowMinutes);
+        $now = now();
+        // The validity depends on the platform passcode mode:
+        //   • static   → the code lives for the whole session window
+        //   • rotating → the code resets every `passcode_reset_seconds`
+        // A caller-supplied `expiresAt` always wins (admin override).
+        $effectiveExpiry = $expiresAt ?? $this->defaultExpiryFor($session, $now);
+        $validityMinutes = max(1, (int) ceil($now->diffInSeconds($effectiveExpiry, false) / 60));
 
         $session->forceFill([
             'passcode'                  => $this->randomNumericCode($length),
-            'passcode_issued_at'        => now(),
+            'passcode_issued_at'        => $now,
             'passcode_expires_at'       => $effectiveExpiry,
-            'attendance_window_minutes' => $expiresAt === null ? $windowMinutes : null,
+            'attendance_window_minutes' => $expiresAt === null ? $validityMinutes : null,
         ])->save();
 
         return $session->fresh();
+    }
+
+    /**
+     * Resolve when a freshly-issued passcode should expire when the caller
+     * did not pin an explicit timestamp.
+     *
+     * Static mode keeps the code valid until the session's own window
+     * closes (time_to + grace), so attendance stays open the whole class.
+     * Rotating mode keeps it short-lived (`passcode_reset_seconds`) but
+     * never lets it outlive the session window.
+     */
+    private function defaultExpiryFor(CourseSession $session, Carbon $now): Carbon
+    {
+        $grace      = $this->settings->attendanceSessionGraceMinutes();
+        $windowEnd  = $this->sessionWindowEnd($session, $now);
+        $windowEnd  = $windowEnd?->copy()->addMinutes($grace);
+
+        if ($this->settings->passcodeStaticForSession()) {
+            return $windowEnd ?? $now->copy()->addMinutes($this->settings->attendanceWindowMinutes());
+        }
+
+        $expiry = $now->copy()->addSeconds($this->settings->passcodeResetSeconds());
+
+        // A rotating code must never claim to be valid after the session
+        // window itself has closed.
+        if ($windowEnd !== null && $expiry->gt($windowEnd)) {
+            return $windowEnd;
+        }
+
+        return $expiry;
+    }
+
+    /**
+     * The wall-clock end of a session's attendance window, derived from
+     * `session_date` + `time_to`. Null when the session has no time bound
+     * (date-only sessions are open all day).
+     */
+    private function sessionWindowEnd(CourseSession $session, Carbon $now): ?Carbon
+    {
+        $timeTo = $session->time_to;
+        if ($timeTo === null || $timeTo === '') {
+            return null;
+        }
+
+        $date = $session->session_date ? substr((string) $session->session_date, 0, 10) : $now->toDateString();
+
+        try {
+            return Carbon::parse($date . ' ' . $timeTo);
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     public function revoke(CourseSession $session): CourseSession
