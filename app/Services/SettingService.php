@@ -37,5 +37,10 @@ class SettingService
         // separately under `mobile.settings.map`. Without this, edits to a
         // `mobile_*` setting from the admin panel would lag up to 10 minutes.
         Cache::forget('mobile.settings.map');
+        // Cross-module map (e.g. the attendance passcode mode + reset interval
+        // live in Platform Config but are read by the mobile/passcode layer).
+        // Flush it so a saved "Course Attendance" / "Passcode Reset" change
+        // takes effect on the very next dashboard refresh.
+        Cache::forget('settings.all.map');
     }
 }

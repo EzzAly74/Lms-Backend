@@ -31,6 +31,8 @@ final class MobileSettings
     private const CACHE_KEY = 'mobile.settings.map';
     private const CACHE_TTL_MINUTES = 10;
 
+    private const ALL_CACHE_KEY = 'settings.all.map';
+
     /**
      * Flat `key => value` map of every `mobile_*` module setting.
      *
@@ -38,10 +40,22 @@ final class MobileSettings
      */
     private ?array $map = null;
 
+    /**
+     * Flat `key => value` map of EVERY setting (all modules), preferring the
+     * `platform` row on key collisions. Used for the handful of values that
+     * the admin `/admin/settings` (Platform Config) screen owns but the
+     * mobile layer still needs to read — e.g. the attendance passcode mode.
+     *
+     * @var array<string, string>|null
+     */
+    private ?array $allMap = null;
+
     public function flush(): void
     {
         $this->map = null;
+        $this->allMap = null;
         Cache::forget(self::CACHE_KEY);
+        Cache::forget(self::ALL_CACHE_KEY);
     }
 
     // ────────────────────────────────────────────────────────────
@@ -155,10 +169,23 @@ final class MobileSettings
      *
      * Defaults to the static behaviour on un-seeded environments so an
      * older deployment keeps its previous "valid for the window" semantics.
+     *
+     * NOTE: this key is owned by Platform Config (module `platform`) and
+     * edited from the dashboard Settings screen — NOT the `mobile_*` modules
+     * — so it is resolved through {@see platformValue()} which reads across
+     * every module. Reading it from the mobile-only map was the cause of the
+     * "passcode never resets" bug: the dashboard wrote the `platform` row
+     * while this class kept reading a stale `mobile_attendance` copy.
      */
     public function passcodeStaticForSession(): bool
     {
-        return $this->boolOr('course_attendance_enabled', true);
+        $value = $this->platformValue('course_attendance_enabled');
+
+        if ($value === null || $value === '') {
+            return true; // un-seeded → keep the legacy "static for window" behaviour
+        }
+
+        return in_array(strtolower($value), ['1', 'true', 'yes', 'on'], true);
     }
 
     /**
@@ -166,12 +193,17 @@ final class MobileSettings
      * static. Falls back to 30s on un-seeded environments and clamps to a
      * sane floor so a misconfigured `0` never produces an already-expired
      * code.
+     *
+     * Owned by Platform Config (module `platform`) — resolved globally via
+     * {@see platformValue()} so dashboard edits take effect immediately.
      */
     public function passcodeResetSeconds(): int
     {
-        $value = $this->nonNegativeIntOr('passcode_reset_seconds', 30);
+        $value = $this->platformValue('passcode_reset_seconds');
 
-        return $value > 0 ? $value : 30;
+        $seconds = ($value === null || $value === '') ? 30 : (int) $value;
+
+        return $seconds > 0 ? $seconds : 30;
     }
 
     // ────────────────────────────────────────────────────────────
@@ -296,6 +328,51 @@ final class MobileSettings
         }
 
         return in_array(strtolower((string) $map[$key]), ['1', 'true', 'yes', 'on'], true);
+    }
+
+    /**
+     * Resolve a setting value by key across EVERY module (not just `mobile_*`).
+     *
+     * Used for keys that the admin Platform Config screen owns but the mobile
+     * / passcode layer also consumes (the attendance passcode mode + reset
+     * interval). It deliberately reads the SAME row the admin save targets:
+     * `SettingRepository::updateByKey()` upserts via `firstOrNew(['key' => …])`
+     * — i.e. the lowest-id row for that key — so we read lowest-id-first too.
+     * This keeps reads and writes pointing at one row even if a duplicate key
+     * exists in more than one module, which was the "passcode never resets"
+     * bug (dashboard wrote the `platform` row; this class read a stale
+     * `mobile_attendance` copy).
+     *
+     * Returns null when the key is absent. Cached for the request + 10 minutes
+     * and flushed by {@see flush()} (and by SettingService on every save).
+     */
+    private function platformValue(string $key): ?string
+    {
+        if ($this->allMap === null) {
+            $this->allMap = Cache::remember(
+                self::ALL_CACHE_KEY,
+                now()->addMinutes(self::CACHE_TTL_MINUTES),
+                static function (): array {
+                    $out = [];
+
+                    // Ascending id == the row firstOrNew() resolves on write, so
+                    // the first value we keep per key is the canonical one.
+                    foreach (
+                        Setting::query()->orderBy('id')->get(['key', 'value']) as $row
+                    ) {
+                        if (!array_key_exists($row->key, $out)) {
+                            $out[$row->key] = $row->value;
+                        }
+                    }
+
+                    return $out;
+                },
+            );
+        }
+
+        $value = $this->allMap[$key] ?? null;
+
+        return $value === null ? null : (string) $value;
     }
 
     private function intValue(string $key): int
