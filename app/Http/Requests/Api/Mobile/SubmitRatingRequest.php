@@ -36,6 +36,30 @@ final class SubmitRatingRequest extends FormRequest
         return true;
     }
 
+    /**
+     * Safety net for clients that POST a JSON body without a proper
+     * `Content-Type: application/json` header (a very common Swagger /
+     * Postman misconfiguration). In that case Laravel never populates
+     * the input bag from the body, so `rating` looks "missing" even
+     * though it was sent. We decode the raw body and merge it in.
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->input('rating') !== null) {
+            return;
+        }
+
+        $raw = trim((string) $this->getContent());
+        if ($raw === '') {
+            return;
+        }
+
+        $decoded = json_decode($raw, true);
+        if (is_array($decoded)) {
+            $this->merge($decoded);
+        }
+    }
+
     public function rules(): array
     {
         $min = $this->settings->ratingMinValue();

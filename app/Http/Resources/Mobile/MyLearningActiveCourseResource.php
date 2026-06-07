@@ -48,6 +48,16 @@ class MyLearningActiveCourseResource extends JsonResource
             ? $myLearn->liveSessionFor($authUser, $course->id, (int) $cohort->id, now())
             : null;
 
+        // Up-next session ("Session 3" / "الجلسة 3") — the first session
+        // whose turn comes after the current/finished one.
+        $nextSession = $cohort
+            ? $myLearn->nextSessionFor($authUser, $course->id, (int) $cohort->id, $locale)
+            : null;
+
+        // The learner's own rating for this course (null ⇒ app shows the
+        // "Add rate" CTA, otherwise it renders the existing score).
+        $userRating = $myLearn->userRatingForCourse($authUser, $course->id);
+
         return [
             'id'             => (int) $course->id,
             'title'          => $course->getTranslation('title', $locale),
@@ -87,6 +97,11 @@ class MyLearningActiveCourseResource extends JsonResource
                 'absences'           => (int) $progress['absences'],
                 'next_unit_title'    => $progress['next_unit_title'],
             ],
+            // The learner's own rating (null when not rated yet).
+            'rate'           => $userRating !== null ? (int) $userRating->rating : null,
+            // Next session up (after the current one finishes).
+            'session_number' => $nextSession['number'] ?? null,
+            'session_name'   => $nextSession['name'] ?? null,
             // True when a session of the enrolled cohort is live right now
             // (drives the Figma "Live Now" badge). Mirrors live_session != null.
             'isLive'         => $liveSession !== null,

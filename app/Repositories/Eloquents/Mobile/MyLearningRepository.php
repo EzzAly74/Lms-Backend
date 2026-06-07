@@ -178,9 +178,62 @@ final class MyLearningRepository implements MyLearningRepositoryInterface
         ];
     }
 
+    public function nextSessionFor(User $user, int $courseId, int $cohortId, string $locale): ?array
+    {
+        $now = now();
+
+        // Same chronological ordering used everywhere else; unscheduled
+        // (null-date) sessions are pushed to the end.
+        $sessions = DB::table('course_sessions')
+            ->where('course_id', $courseId)
+            ->where('section_id', $cohortId)
+            ->orderByRaw('session_date IS NULL')
+            ->orderBy('session_date')
+            ->orderBy('time_from')
+            ->orderBy('id')
+            ->get(['id', 'session_date', 'time_from']);
+
+        if ($sessions->isEmpty()) {
+            return null;
+        }
+
+        foreach ($sessions as $i => $session) {
+            $start = $this->sessionStart($session);
+
+            // The "next" session is the first one that has not started
+            // yet — its turn comes after the current session finishes.
+            if ($start === null || $start->greaterThan($now)) {
+                $number = $i + 1;
+
+                return [
+                    'number' => $number,
+                    'name'   => $locale === 'ar' ? "الجلسة {$number}" : "Session {$number}",
+                ];
+            }
+        }
+
+        return null; // every session has already started — nothing upcoming
+    }
+
     // ────────────────────────────────────────────────────────────
     // Internals
     // ────────────────────────────────────────────────────────────
+
+    private function sessionStart(object $session): ?\Illuminate\Support\Carbon
+    {
+        if ($session->session_date === null) {
+            return null;
+        }
+
+        $start = \Illuminate\Support\Carbon::parse($session->session_date)->startOfDay();
+
+        if (! empty($session->time_from)) {
+            [$h, $m, $s] = array_pad(explode(':', (string) $session->time_from), 3, '0');
+            $start->setTime((int) $h, (int) $m, (int) $s);
+        }
+
+        return $start;
+    }
 
     private function activeCoursesQuery(User $user)
     {

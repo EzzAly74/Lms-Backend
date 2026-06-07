@@ -76,4 +76,15 @@ interface MyLearningRepositoryInterface
      * The user's own rating row for a course, or `null`.
      */
     public function userRatingForCourse(User $user, int $courseId): ?object;
+
+    /**
+     * The next session that is "up next" for the cohort — i.e. the first
+     * chronological session that has not started yet (its turn comes
+     * after any currently-live / already-finished session). Returns the
+     * session's 1-based sequence number and a localized label such as
+     * "Session 3" / "الجلسة 3", or `null` when nothing is upcoming.
+     *
+     * @return array{number: int, name: string}|null
+     */
+    public function nextSessionFor(User $user, int $courseId, int $cohortId, string $locale): ?array;
 }
