@@ -68,6 +68,40 @@ class MyLearningApiTest extends MobileTestCase
                  ]]]);
     }
 
+    public function test_active_card_islive_false_without_open_session(): void
+    {
+        $user = $this->employee();
+        $this->enrolInRunningCourse($user);
+
+        $response = $this->withHeaders($this->headersFor($user))
+                         ->getJson(self::BASE . '/mobile/my-learning/active');
+
+        $this->assertPaginated($response);
+        $response->assertJsonPath('result.0.isLive', false);
+    }
+
+    public function test_active_card_islive_true_with_open_session(): void
+    {
+        $user = $this->employee();
+        [$course, $cohort] = $this->enrolInRunningCourse($user);
+
+        // A session happening right now (today, no time-of-day restriction).
+        CourseSession::factory()->create([
+            'course_id'    => $course->id,
+            'section_id'   => $cohort->id,
+            'session_date' => now()->toDateString(),
+            'time_from'    => null,
+            'time_to'      => null,
+        ]);
+
+        $response = $this->withHeaders($this->headersFor($user))
+                         ->getJson(self::BASE . '/mobile/my-learning/active');
+
+        $this->assertPaginated($response);
+        $response->assertJsonPath('result.0.isLive', true)
+                 ->assertJsonPath('result.0.live_session.id', fn ($id) => $id !== null);
+    }
+
     public function test_active_is_empty_for_unenrolled_learner(): void
     {
         $user = $this->employee();

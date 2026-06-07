@@ -87,6 +87,9 @@ class MyLearningActiveCourseResource extends JsonResource
                 'absences'           => (int) $progress['absences'],
                 'next_unit_title'    => $progress['next_unit_title'],
             ],
+            // True when a session of the enrolled cohort is live right now
+            // (drives the Figma "Live Now" badge). Mirrors live_session != null.
+            'isLive'         => $liveSession !== null,
             'live_session'   => $liveSession ? [
                 'id'           => (int) $liveSession->id,
                 'title'        => $liveSession->title,

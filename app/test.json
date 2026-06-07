@@ -1,0 +1,136 @@
+{
+    "status": "success",
+    "message": "My Learning overview retrieved.",
+    "result": {
+      "learner": {
+        "id": 6,
+        "machine_code": "2344",
+        "name": "محمد حماده محمد احمد",
+        "email": "M.hamada@2b.com.eg",
+        "image": null,
+        "department_name": "اداره البرمجه",
+        "job_title": {
+          "id": 38,
+          "name": "مطور اول  تطبيقات الالكترونية"
+        },
+        "learner_type": "online"
+      },
+      "counts": {
+        "active_courses": 3,
+        "qualifications": 0,
+        "certificates": 0
+      },
+      "previews": {
+        "active_courses": [
+          {
+            "id": 11,
+            "title": "Hamada Course",
+            "course_type": "offline",
+            "image": "http://161.97.168.2:8088/storage/Course/7oQwKr5hme4kdRQN0O4Zbb1516c073bbdcd074d24ff85d1ad11d.png",
+            "hours": 1,
+            "category": null,
+            "instructors": [
+              {
+                "id": 4,
+                "name": "ezz aly",
+                "image": "http://161.97.168.2:8088/storage/instructors/aak1h3VvqpVtrIJ1zZgHdf6b97c823736e4c49d35fc233a9d0df.jpg"
+              }
+            ],
+            "cohort": {
+              "id": 37,
+              "name": "cohort b",
+              "start_date": "2026-06-06",
+              "end_date": "2026-09-06"
+            },
+            "progress": {
+              "percent": 0,
+              "completed_lectures": 0,
+              "total_lectures": 1,
+              "attended_sessions": 1,
+              "past_sessions": 3,
+              "total_sessions": 3,
+              "absences": 2,
+              "next_unit_title": "hamada link"
+            },
+            "live_session": {
+              "id": 25,
+              "title": "Live Session — 07 Jun 2026",
+              "session_date": "2026-06-07",
+              "time_from": "11:09:00",
+              "time_to": "14:09:00",
+              "location": null
+            },
+            "learner_machine_code": "2344"
+          },
+          {
+            "id": 10,
+            "title": "Effective Communication",
+            "course_type": "offline",
+            "image": "http://161.97.168.2:8088/storage/Course/8vsq4bin3oYzhTli1cCHf236d07bd8780eb36ad22de451466f17.png",
+            "hours": 20,
+            "category": null,
+            "instructors": [
+              {
+                "id": 4,
+                "name": "ezz aly",
+                "image": "http://161.97.168.2:8088/storage/instructors/aak1h3VvqpVtrIJ1zZgHdf6b97c823736e4c49d35fc233a9d0df.jpg"
+              }
+            ],
+            "cohort": {
+              "id": 33,
+              "name": "Cohort A",
+              "start_date": "2026-07-04",
+              "end_date": "2026-08-04"
+            },
+            "progress": {
+              "percent": 0,
+              "completed_lectures": 0,
+              "total_lectures": 2,
+              "attended_sessions": 0,
+              "past_sessions": 0,
+              "total_sessions": 0,
+              "absences": 0,
+              "next_unit_title": "hamada test"
+            },
+            "live_session": null,
+            "learner_machine_code": "2344"
+          },
+          {
+            "id": 7,
+            "title": "Second Course",
+            "course_type": "offline",
+            "image": "http://161.97.168.2:8088/storage/Course/43WA9IDD8SIplrKxLAPbce01f24e26d54828813a8cb613cca898.jpg",
+            "hours": 20,
+            "category": null,
+            "instructors": [
+              {
+                "id": 2,
+                "name": "Karim Hassan",
+                "image": "http://161.97.168.2:8088/storage/Instructor/J1MivWmo89BmmCaODRJR630a1e36f1a380d43a985996c79c8044.png"
+              }
+            ],
+            "cohort": {
+              "id": 31,
+              "name": "Open Intake",
+              "start_date": "2026-06-30",
+              "end_date": "2026-09-28"
+            },
+            "progress": {
+              "percent": 0,
+              "completed_lectures": 0,
+              "total_lectures": 0,
+              "attended_sessions": 0,
+              "past_sessions": 0,
+              "total_sessions": 0,
+              "absences": 0,
+              "next_unit_title": null
+            },
+            "live_session": null,
+            "learner_machine_code": "2344"
+          }
+        ],
+        "qualifications": [],
+        "certificates": []
+      }
+    }
+  }
