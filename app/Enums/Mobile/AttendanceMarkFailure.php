@@ -22,7 +22,11 @@ enum AttendanceMarkFailure: string
     public function httpStatus(): int
     {
         return match ($this) {
-            self::InvalidCode,
+            // A wrong passcode is an expected, recoverable outcome — the
+            // mobile client re-prompts the learner. We return HTTP 200 so
+            // it isn't treated as a hard error; the body still carries
+            // `success: false` and the same explanatory message.
+            self::InvalidCode    => 200,
             self::ExpiredCode    => 422,
             self::NoOpenWindow   => 409,
             self::AlreadyMarked  => 409,
