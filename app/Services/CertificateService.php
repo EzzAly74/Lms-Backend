@@ -21,9 +21,9 @@ use Illuminate\Support\Facades\DB;
  * exactly one place (never scattered across controllers).
  *
  * Issuance rules:
- *   A) final-exam pass  → course.certificate && !course.is_evaluate
+ *   A) final-exam pass  ? course.certificate && !course.is_evaluate
  *                         && exam.is_final && user_exam.status='success'
- *   B) evaluation done  → course.certificate &&  course.is_evaluate
+ *   B) evaluation done  ? course.certificate &&  course.is_evaluate
  *
  * Invariant: one learner + one course = one ACTIVE certificate.
  */
@@ -129,7 +129,7 @@ class CertificateService
     }
 
     /* ================================================================ *
-     |  Legacy read API (kept for /api/v1/certificates) — DB-backed     |
+     |  Legacy read API (kept for /api/v1/certificates) � DB-backed     |
      * ================================================================ */
 
     public function paginate(int $perPage = 20, ?int $courseId = null): LengthAwarePaginator
@@ -154,7 +154,7 @@ class CertificateService
      * ================================================================ */
 
     /**
-     * Core issuance routine — transactional, idempotent (one active
+     * Core issuance routine � transactional, idempotent (one active
      * certificate per learner+course), and number-safe under concurrency.
      */
     private function issue(

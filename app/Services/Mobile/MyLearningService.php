@@ -60,6 +60,17 @@ final class MyLearningService
     }
 
     /**
+     * Sequence number + localized label of the session that is up next
+     * for the cohort, or null when there's nothing upcoming.
+     *
+     * @return array{number: int, name: string}|null
+     */
+    public function nextSessionFor(User $user, int $courseId, int $cohortId, string $locale): ?array
+    {
+        return $this->repository->nextSessionFor($user, $courseId, $cohortId, $locale);
+    }
+
+    /**
      * Live-session detection driver for the S-05 card. Returns null
      * if no session is happening now, otherwise the smallest
      * relevant session row.
