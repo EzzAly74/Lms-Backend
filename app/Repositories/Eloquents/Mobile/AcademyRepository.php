@@ -296,6 +296,16 @@ final class AcademyRepository implements AcademyRepositoryInterface
         return $this->course->newQuery()
             ->where(function ($q) use ($user, $today, $offset, $visibility) {
                 $this->applyAvailableExists($q, $user, $today, $offset, $visibility);
+            })
+            // Rule #5 — drop the whole course once the user is enrolled in
+            // ANY of its cohorts. The per-cohort exclusion inside
+            // `applyAvailableExists` only hides the joined cohort, so a
+            // course with a second joinable cohort would otherwise keep
+            // showing in the Academy list after enrolment.
+            ->whereNotExists(function ($sub) use ($user) {
+                $sub->from('users_courses')
+                    ->whereColumn('users_courses.course_id', 'courses.id')
+                    ->where('users_courses.user_id', $user->id);
             });
     }
 
