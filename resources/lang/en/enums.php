@@ -146,4 +146,13 @@ return [
         'in_progress' => 'In Progress',
         'completed'   => 'Completed',
     ],
+
+    // ── Course rating sentiment (5-point scale) ────────────────────────
+    'rating_sentiment' => [
+        'very_satisfied'     => 'Very satisfied',
+        'satisfied'          => 'Satisfied',
+        'neutral'            => 'Neutral',
+        'unsatisfied'        => 'Unsatisfied',
+        'unsatisfied_at_all' => 'Unsatisfied at all',
+    ],
 ];

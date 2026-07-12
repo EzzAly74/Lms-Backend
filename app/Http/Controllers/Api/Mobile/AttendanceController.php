@@ -18,9 +18,10 @@ use Illuminate\Http\JsonResponse;
  *
  * The flow is intentionally single-purpose. Status mapping:
  *   201 — success
+ *   200 — wrong passcode (recoverable; body has success:false)
  *   403 — not enrolled in the course
  *   409 — no open session window OR already marked attended
- *   422 — invalid / expired passcode
+ *   422 — expired passcode
  */
 class AttendanceController extends MobileBaseController
 {
@@ -42,9 +43,10 @@ class AttendanceController extends MobileBaseController
      *         @OA\Property(property="passcode",   type="string"),
      *     )),
      *     @OA\Response(response=201, description="Attendance recorded"),
+     *     @OA\Response(response=200, description="Wrong passcode (success:false)"),
      *     @OA\Response(response=403, description="Not enrolled"),
      *     @OA\Response(response=409, description="No open window / already marked"),
-     *     @OA\Response(response=422, description="Invalid or expired code")
+     *     @OA\Response(response=422, description="Expired code")
      * )
      */
     public function mark(MarkAttendanceRequest $request): JsonResponse

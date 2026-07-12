@@ -131,4 +131,12 @@ return [
         'in_progress' => 'قيد التقدم',
         'completed'   => 'مكتمل',
     ],
+
+    'rating_sentiment' => [
+        'very_satisfied'     => 'راضي جدًا',
+        'satisfied'          => 'راضي',
+        'neutral'            => 'محايد',
+        'unsatisfied'        => 'غير راضي',
+        'unsatisfied_at_all' => 'غير راضي على الإطلاق',
+    ],
 ];

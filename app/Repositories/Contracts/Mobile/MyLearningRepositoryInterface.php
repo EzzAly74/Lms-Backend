@@ -78,11 +78,16 @@ interface MyLearningRepositoryInterface
     public function userRatingForCourse(User $user, int $courseId): ?object;
 
     /**
-     * The next session that is "up next" for the cohort — i.e. the first
-     * chronological session that has not started yet (its turn comes
-     * after any currently-live / already-finished session). Returns the
-     * session's 1-based sequence number and a localized label such as
-     * "Session 3" / "الجلسة 3", or `null` when nothing is upcoming.
+     * The session the learner is currently heading toward, expressed as
+     * (number of finished sessions) + 1 — so it always starts at
+     * "Session 1", even when the cohort has no sessions created yet.
+     *
+     * A session counts as finished once its explicit `time_to` has
+     * passed, or — when it has no end time — once the cohort's average
+     * session length has elapsed since its start (auto-end).
+     *
+     * Returns the 1-based sequence number plus a localized label
+     * ("Session 3" / "الجلسة 3"). Always non-null for an enrolled cohort.
      *
      * @return array{number: int, name: string}|null
      */

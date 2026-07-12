@@ -182,57 +182,114 @@ final class MyLearningRepository implements MyLearningRepositoryInterface
     {
         $now = now();
 
-        // Same chronological ordering used everywhere else; unscheduled
-        // (null-date) sessions are pushed to the end.
         $sessions = DB::table('course_sessions')
             ->where('course_id', $courseId)
             ->where('section_id', $cohortId)
-            ->orderByRaw('session_date IS NULL')
-            ->orderBy('session_date')
-            ->orderBy('time_from')
-            ->orderBy('id')
-            ->get(['id', 'session_date', 'time_from']);
+            ->get(['id', 'session_date', 'time_from', 'time_to']);
 
-        if ($sessions->isEmpty()) {
-            return null;
-        }
+        // Auto-end length for sessions that have no explicit end time.
+        // Prefers the cohort's stored "Avg. Session Time"
+        // (course_sections.avg_session_time, in HOURS), then the average
+        // computed from the cohort's own timed sessions, then 2h.
+        $avgMinutes = $this->cohortAutoEndMinutes($cohortId, $sessions);
 
-        foreach ($sessions as $i => $session) {
-            $start = $this->sessionStart($session);
-
-            // The "next" session is the first one that has not started
-            // yet — its turn comes after the current session finishes.
-            if ($start === null || $start->greaterThan($now)) {
-                $number = $i + 1;
-
-                return [
-                    'number' => $number,
-                    'name'   => $locale === 'ar' ? "الجلسة {$number}" : "Session {$number}",
-                ];
+        // How many sessions are already finished (real end-time passed,
+        // or auto-ended once the average length elapsed).
+        $endedCount = 0;
+        foreach ($sessions as $session) {
+            if ($this->sessionHasEnded($session, $now, $avgMinutes)) {
+                $endedCount++;
             }
         }
 
-        return null; // every session has already started — nothing upcoming
+        // Sessions are 1-indexed and the learner is always heading toward
+        // the one right after the last finished session. With zero
+        // sessions (or none finished yet) this resolves to "Session 1".
+        $number = $endedCount + 1;
+
+        return [
+            'number' => $number,
+            'name'   => $locale === 'ar' ? "الجلسة {$number}" : "Session {$number}",
+        ];
     }
 
     // ────────────────────────────────────────────────────────────
     // Internals
     // ────────────────────────────────────────────────────────────
 
-    private function sessionStart(object $session): ?\Illuminate\Support\Carbon
+    /**
+     * Minutes after which an open (no `time_to`) session is auto-ended.
+     * The cohort's admin-set "Avg. Session Time" (stored in hours) wins;
+     * otherwise we average the cohort's own timed sessions.
+     *
+     * @param  \Illuminate\Support\Collection<int, object>  $sessions
+     */
+    private function cohortAutoEndMinutes(int $cohortId, Collection $sessions): int
+    {
+        $avgHours = DB::table('course_sections')
+            ->where('id', $cohortId)
+            ->value('avg_session_time');
+
+        if ($avgHours !== null && (float) $avgHours > 0) {
+            return (int) round((float) $avgHours * 60);
+        }
+
+        return $this->cohortAverageSessionMinutes($sessions);
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, object>  $sessions
+     */
+    private function cohortAverageSessionMinutes(Collection $sessions): int
+    {
+        $durations = [];
+
+        foreach ($sessions as $session) {
+            if (! empty($session->time_from) && ! empty($session->time_to)) {
+                $from = $this->minutesOfDay((string) $session->time_from);
+                $to   = $this->minutesOfDay((string) $session->time_to);
+                if ($to > $from) {
+                    $durations[] = $to - $from;
+                }
+            }
+        }
+
+        if ($durations === []) {
+            return 120; // sane 2-hour default when nothing can be averaged
+        }
+
+        return (int) round(array_sum($durations) / count($durations));
+    }
+
+    private function minutesOfDay(string $time): int
+    {
+        [$h, $m] = array_pad(explode(':', $time), 2, '0');
+
+        return ((int) $h) * 60 + (int) $m;
+    }
+
+    private function sessionHasEnded(object $session, \Illuminate\Support\Carbon $now, int $avgMinutes): bool
     {
         if ($session->session_date === null) {
-            return null;
+            return false; // unscheduled → can't have ended yet
         }
 
-        $start = \Illuminate\Support\Carbon::parse($session->session_date)->startOfDay();
+        $end = \Illuminate\Support\Carbon::parse($session->session_date)->startOfDay();
 
-        if (! empty($session->time_from)) {
+        if (! empty($session->time_to)) {
+            // Explicit end time wins.
+            [$h, $m, $s] = array_pad(explode(':', (string) $session->time_to), 3, '0');
+            $end->setTime((int) $h, (int) $m, (int) $s);
+        } elseif (! empty($session->time_from)) {
+            // No end → auto-end after the cohort's average length.
             [$h, $m, $s] = array_pad(explode(':', (string) $session->time_from), 3, '0');
-            $start->setTime((int) $h, (int) $m, (int) $s);
+            $end->setTime((int) $h, (int) $m, (int) $s)->addMinutes($avgMinutes);
+        } else {
+            // Whole-day session with no clock → ends when the day is over.
+            $end->endOfDay();
         }
 
-        return $start;
+        return $end->lessThan($now);
     }
 
     private function activeCoursesQuery(User $user)
